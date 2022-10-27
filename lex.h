@@ -3,6 +3,12 @@
 #define FAIL -1
 typedef enum mcodes{mcEmpty,mcSymb,mcNum,mcIdent} tMC;
 
+enum keywrdtype
+{
+    tNIL,tErg=128,tle,tge,
+    tBGN,tCLL,tCST,tDO,tEND,tELS,tIF,tGET,tODD,tPUT,tPRC,tTHN,tVAR,tWHL
+};
+
 typedef struct morph
 {
     tMC mc;
