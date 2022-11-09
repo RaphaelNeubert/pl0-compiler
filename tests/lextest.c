@@ -7,32 +7,6 @@
 #include "lex.h"
 
 tMorph Morph={0};
-//int main(int argc, char** argv)
-//{
-//    initLex(argv[1]);
-//    do {
-//        lex();
-//        printf("Line%4d, Col%3d: ",Morph.posLine, Morph.posCol);
-//        switch(Morph.mc)
-//        {
-//            case mcSymb :
-//                if (isprint(Morph.Val.Symb))
-//                    printf("Symbol,%c\n",(char)Morph.Val.Symb);
-//                break;
-//            case mcNum :
-//                printf("Zahl  ,%ld\n",Morph.Val.Num);
-//                break;
-//            case mcIdent:
-//                printf("Ident ,%s\n",(char*)Morph.Val.pStr);
-//                break;
-//            case mcEmpty:
-//                puts("its Empty");
-//                break;
-//        }
-//    } while (!(Morph.mc==mcSymb && Morph.Val.Symb==-1)) ;
-//    puts("");
-//    return 0;
-//}
 
 int main(int argc, void*argv[])
 {

@@ -13,26 +13,21 @@ typedef struct node{
 typedef struct list{
 	t_node head;
 	t_node *curr;
+	int size;
 } t_list;
 
-typedef struct set{
-	char fname[20];
-	char lname[20];
-	char num[20];
-} t_set;
 t_list* create_list();
 
 int insert_head(t_list* list, void* data);
 int insert_tail(t_list* list, void* data);
+int insert_curr(t_list* list, void* data);
 
 void* get_first(t_list* list);
+void* get_last(t_list* list);
 void* get_next(t_list*list);
+void* get_prev(t_list* list);
 void* get_index(t_list* list, int idx);
 
+int list_size(t_list* list);
+
 void remove_curr(t_list* list);
-void delete_list(t_list* list);
-
-
-void load_data(char* path, t_list* list);
-void write_data(char* path, t_list* list);
-

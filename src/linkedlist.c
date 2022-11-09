@@ -74,29 +74,6 @@ int list_size(t_list* list){
 	return (list->size);
 }
 
-void sort_list(t_list* list, int(*compare)(const void*, const void*)){
-	int i;
-	t_set* item;
-	t_set* item2;
-	t_set* tmp;
-	t_node* tmpcurr;
-
-	for (i=0; i<list_size(list); i++){
-		if ((item=get_first(list))){
-			do {
-				tmpcurr=list->curr;
-				if ((item2=get_next(list))){
-					if ((*compare)(item, item2) > 0){
-						tmp=list->curr->item;
-						list->curr->item=tmpcurr->item;
-						tmpcurr->item=tmp;
-					}
-				}
-			}while((item=item2));
-		}
-	}
-}
-
 void remove_curr(t_list* list){
 	if (list->curr){
 		list->curr->prev->next=list->curr->next;
