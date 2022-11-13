@@ -1,3 +1,5 @@
 *.o
 r
 *.gch
+*.out
+cpl0
