@@ -52,6 +52,51 @@ struct Edge g_block[] = {
 /*15*/{EtGr, {(ul)g_expr},  NULL, 16, 16},
 /*16*/{EtEn, {(ul)0},       NULL, 0,  0}
 };
+struct Edge g_cond[] = {
+/*0*/ {EtSy, {(ul)tODD},    NULL, 1,  2},
+/*1*/ {EtGr, {(ul)g_expr},  NULL, 9,  0},
+/*2*/ {EtGr, {(ul)g_expr},  NULL, 3,  0},
+/*3*/ {EtSy, {(ul)'='},     NULL, 1,  4},
+/*4*/ {EtSy, {(ul)'#'},     NULL, 1,  5},
+/*5*/ {EtSy, {(ul)'<'},     NULL, 1,  6},
+/*6*/ {EtSy, {(ul)'>'},     NULL, 1,  7},
+/*7*/ {EtSy, {(ul)tle},     NULL, 1,  8},
+/*8*/ {EtSy, {(ul)tge},     NULL, 1,  0},
+/*9*/ {EtEn, {(ul)0},       NULL, 0,  0}
+};
+
+struct Edge g_statement[] = {
+// a := b+c
+/*0*/ {EtMo, {(ul)mcIdent},    NULL, 1,  3},
+/*1*/ {EtSy, {(ul)tErg},       NULL, 2,  0},
+/*2*/ {EtGr, {(ul)g_expr},     NULL, 21,  0},
+// if
+/*3*/ {EtSy, {(ul)tIF},        NULL, 4,  7},
+/*4*/ {EtGr, {(ul)g_cond},     NULL, 5,  0},
+/*5*/ {EtSy, {(ul)tTHN},       NULL, 6,  0},
+/*6*/ {EtGr, {(ul)g_statement},NULL, 21,  0},
+// while
+/*7*/ {EtSy, {(ul)tWHL},       NULL, 8,  11},
+/*8*/ {EtGr, {(ul)g_cond},     NULL, 9,  0},
+/*9*/ {EtSy, {(ul)tDO},        NULL, 10, 0}, //TODO point to 6 instead of 10
+/*10*/{EtGr, {(ul)g_statement},NULL, 21, 0}, 
+// begin
+/*11*/{EtSy, {(ul)tBGN},       NULL, 12, 15},
+/*12*/{EtGr, {(ul)g_statement},NULL, 13, 0},
+/*13*/{EtSy, {(ul)';'},        NULL, 12,  14},
+/*14*/{EtSy, {(ul)tEND},       NULL, 21, 0},
+// call
+/*15*/{EtSy, {(ul)tCLL},       NULL, 16, 17},
+/*16*/{EtMo, {(ul)mcIdent},    NULL, 21,  0},
+// ?
+/*17*/{EtSy, {(ul)'?'},        NULL, 18, 19}, //TODO point to 16 instead of 18
+/*18*/{EtMo, {(ul)mcIdent},    NULL, 21,  0},
+// !
+/*19*/{EtSy, {(ul)'!'},        NULL, 20, 21},
+/*20*/{EtGr, {(ul)g_expr},     NULL, 21,  0},
+
+/*21*/{EtEn, {(ul)0},          NULL, 0,  0} 
+};
 
 struct Edge g_prog[] = {
 /*0*/ {EtGr, {(ul)g_block}, NULL, 1, 0},
@@ -162,7 +207,7 @@ int pars(struct Edge* p_graph)
 
 int main()
 {
-    initLex("test.pl0");
+    initLex("tests/fakultRecursiv.pl0");
 
     int res = pars(g_prog);
     if (res && Morph.mc == mcEmpty) 
