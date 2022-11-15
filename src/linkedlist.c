@@ -2,24 +2,24 @@
 #include "linkedlist.h"
 
 
-t_list* create_list(){
-	t_list* ptmp=malloc(sizeof(t_list));
-	if (ptmp){
-		ptmp->head.next=&(ptmp->head);
-		ptmp->head.prev=&(ptmp->head);
-		ptmp->head.item=NULL;
-		ptmp->curr=NULL;
-		ptmp->size=0;
+struct list_head* create_list(){
+	struct list_head* list=malloc(sizeof(struct list_head));
+	if (list){
+		list->head.next=&(list->head);
+		list->head.prev=&(list->head);
+		list->head.item=NULL;
+		list->curr=NULL;
+		list->size=0;
 	}
-	return ptmp;
+	return list;
 }
 
-static int insert_after(t_node* pbef, void* data){
-	t_node* ptmp=malloc(sizeof(t_node));
+static int list_insert_after(struct list_node* pprev, void* data){
+	struct list_node* ptmp=malloc(sizeof(struct list_node));
 	if (ptmp){
-		ptmp->next=pbef->next;
-		ptmp->prev=pbef;
-		pbef->next=ptmp;
+		ptmp->next=pprev->next;
+		ptmp->prev=pprev;
+		pprev->next=ptmp;
 		ptmp->next->prev=ptmp;
 		ptmp->item=data;
 		return 1;
@@ -27,54 +27,54 @@ static int insert_after(t_node* pbef, void* data){
 	return 0;
 }
 
-int insert_head(t_list* list, void* data){
+int list_insert_head(struct list_head* list, void* data){
 	list->size++;
-	return insert_after(&(list->head), data);
+	return list_insert_after(&(list->head), data);
 }
 
-int insert_tail(t_list* list, void* data){
+int list_insert_tail(struct list_head* list, void* data){
 	list->size++;
-	return insert_after(list->head.prev, data);
+	return list_insert_after(list->head.prev, data);
 }
-int insert_curr(t_list* list, void* data){
+int list_insert_curr(struct list_head* list, void* data){
 	list->size++;
-	return insert_after(list->curr, data);
+	return list_insert_after(list->curr, data);
 }
 
-void* get_first(t_list* list){
+void* list_get_first(struct list_head* list){
 	list->curr=list->head.next;
 	return (list->head.next->item);
 }
 
-void* get_last(t_list* list){
+void* list_get_last(struct list_head* list){
 	list->curr=list->head.prev;
 	return (list->head.prev->item);
 }
 
-void* get_next(t_list* list){
+void* list_get_next(struct list_head* list){
 	list->curr=list->curr->next;
 	return (list->curr->item);
 }
 
-void* get_prev(t_list* list){
+void* list_get_prev(struct list_head* list){
 	list->curr=list->curr->prev;
 	return (list->curr->item);
 }
 
-void* get_index(t_list* list, int idx){
+void* list_get_index(struct list_head* list, int idx){
 	int i;
-	get_first(list);
+	list_get_first(list);
 	for (i=0; i<idx; i++){
 		list->curr=list->curr->next;
 	}
 	return (list->curr->item);
 }
 
-int list_size(t_list* list){
+int list_size(struct list_head* list){
 	return (list->size);
 }
 
-void remove_curr(t_list* list){
+void list_remove_curr(struct list_head* list){
 	if (list->curr){
 		list->curr->prev->next=list->curr->next;
 		list->curr->next->prev=list->curr->prev;

@@ -4,30 +4,30 @@ Raphael Neubert
 20/041/61
 */
 
-typedef struct node{
-	struct node *next;
-	struct node *prev;
+struct list_node {
+	struct list_node *next;
+	struct list_node *prev;
 	void *item;
-} t_node;
+};
 
-typedef struct list{
-	t_node head;
-	t_node *curr;
+struct list_head {
+	struct list_node head;
+	struct list_node *curr;
 	int size;
-} t_list;
+};
 
-t_list* create_list();
+struct list_head* create_list();
 
-int insert_head(t_list* list, void* data);
-int insert_tail(t_list* list, void* data);
-int insert_curr(t_list* list, void* data);
+int list_insert_head(struct list_head* list, void* data);
+int list_insert_tail(struct list_head* list, void* data);
+int list_insert_curr(struct list_head* list, void* data);
 
-void* get_first(t_list* list);
-void* get_last(t_list* list);
-void* get_next(t_list*list);
-void* get_prev(t_list* list);
-void* get_index(t_list* list, int idx);
+void* list_get_first(struct list_head* list);
+void* list_get_last(struct list_head* list);
+void* list_get_next(struct list_head* list);
+void* list_get_prev(struct list_head* list);
+void* list_get_index(struct list_head* list, int idx);
 
-int list_size(t_list* list);
+int list_size(struct list_head* list);
 
-void remove_curr(t_list* list);
+void list_remove_curr(struct list_head* list);
