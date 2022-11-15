@@ -32,25 +32,26 @@ int sres();
 int ires();
 
 struct Edge g_expr[];
+struct Edge g_statement[];
 
 struct Edge g_block[] = {
-/*0*/ {EtSy, {(ul)tCST},    NULL, 1,  5},
-/*1*/ {EtMo, {(ul)mcIdent}, ires, 2,  0},
-/*2*/ {EtMo, {(ul)mcNum},   nres, 3,  0},
-/*3*/ {EtSy, {(ul)','},     sres, 1,  4},
-/*4*/ {EtSy, {(ul)';'},     sres, 5,  0},
-/*5*/ {EtSy, {(ul)tVAR},    NULL, 6,  9},
-/*6*/ {EtMo, {(ul)mcIdent}, ires, 7,  0},
-/*7*/ {EtSy, {(ul)','},     sres, 6,  8},
-/*8*/ {EtSy, {(ul)';'},     sres, 9,  0},
-/*9*/ {EtSy, {(ul)tPRC},    NULL, 10, 14},
-/*10*/{EtMo, {(ul)mcIdent}, ires, 11, 0},
-/*11*/{EtSy, {(ul)';'},     sres, 12, 0},
-/*12*/{EtGr, {(ul)g_block}, NULL, 13, 0},
-/*13*/{EtSy, {(ul)';'},     sres, 9,  0},
-/*14*/{EtNl, {(ul)0},       NULL, 15, 0},
-/*15*/{EtGr, {(ul)g_expr},  NULL, 16, 16},
-/*16*/{EtEn, {(ul)0},       NULL, 0,  0}
+/*0*/ {EtSy, {(ul)tCST},       NULL, 1,  5},
+/*1*/ {EtMo, {(ul)mcIdent},    ires, 2,  0},
+/*2*/ {EtMo, {(ul)mcNum},      nres, 3,  0},
+/*3*/ {EtSy, {(ul)','},        sres, 1,  4},
+/*4*/ {EtSy, {(ul)';'},        sres, 5,  0},
+/*5*/ {EtSy, {(ul)tVAR},       NULL, 6,  9},
+/*6*/ {EtMo, {(ul)mcIdent},    ires, 7,  0},
+/*7*/ {EtSy, {(ul)','},        sres, 6,  8},
+/*8*/ {EtSy, {(ul)';'},        sres, 9,  0},
+/*9*/ {EtSy, {(ul)tPRC},       NULL, 10, 14},
+/*10*/{EtMo, {(ul)mcIdent},    ires, 11, 0},
+/*11*/{EtSy, {(ul)';'},        sres, 12, 0},
+/*12*/{EtGr, {(ul)g_block},    NULL, 13, 0},
+/*13*/{EtSy, {(ul)';'},        sres, 9,  0},
+/*14*/{EtNl, {(ul)0},          NULL, 15, 0},
+/*15*/{EtGr, {(ul)g_statement},NULL, 16, 16},
+/*16*/{EtEn, {(ul)0},          NULL, 0,  0}
 };
 struct Edge g_cond[] = {
 /*0*/ {EtSy, {(ul)tODD},    NULL, 1,  2},
@@ -160,8 +161,8 @@ int pars(struct Edge* p_graph)
         lex();
 
     while(1) {
-        printf("Morph.mc %d\n",Morph.mc);
-        printf("Morph.Val %ld\n",Morph.Val.Num);
+        //printf("Morph.mc %d\n",Morph.mc);
+        //printf("Morph.Val %ld\n",Morph.Val.Num);
         switch(p_edge->edge_type) {
             case EtNl:
                 succ=1;
