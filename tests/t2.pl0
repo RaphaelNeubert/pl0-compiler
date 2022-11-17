@@ -1,0 +1,13 @@
+var a,b,Max;
+procedure p1;
+begin
+  if a>=b then Max:=a;
+  if a< b then Max:=b
+end;
+begin
+  ?a;?b;
+  call p1;
+  !Max
+end.
+
+

@@ -33,7 +33,10 @@ int main(int argc, void*argv[])
 	    if (Morph.Val.Symb==tVAR)   printf("Symbol,_VAR\n");  else
 	    if (Morph.Val.Symb==tWHL)   printf("Symbol,_WHILE\n"); else 
 
-            if (isprint(Morph.Val.Symb))printf("Symbol,%c\n",(char)Morph.Val.Symb);
+            if (isprint(Morph.Val.Symb))
+                printf("Symbol,%c\n",(char)Morph.Val.Symb);
+            else 
+                printf("undefined2: %d",Morph.mc);
 				break;
        case mcNum :
             printf("Zahl  ,%ld\n",Morph.Val.Num);
@@ -43,6 +46,9 @@ int main(int argc, void*argv[])
 				break;
        case mcEmpty:
                 puts("war leer");
+                break;
+       default:
+                printf("undefined: %d",Morph.mc);
     }
   }while (!(Morph.mc==mcSymb && Morph.Val.Symb==-1)) ;
   puts("");
