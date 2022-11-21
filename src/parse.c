@@ -69,6 +69,7 @@ int main(int argc, char **argv)
         exit(0);
     }
     initLex(argv[1]);
+    init_namelist();
 
     int res = pars(g_prog);
     if ((res && Morph.mc == mcEmpty) || Morph.Val.Symb == -1) 

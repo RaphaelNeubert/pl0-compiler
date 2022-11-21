@@ -39,28 +39,34 @@ struct vtype_proc *curr_proc;
 struct Edge g_expr[];
 struct Edge g_statement[];
 
+
 int ires();
 int nres();
 int sres();
+static int nprop_cnst();
 
 struct Edge g_block[] = {
-/*0*/ {EtSy, {(ul)tCST},       NULL, 1,  5},
-/*1*/ {EtMo, {(ul)mcIdent},    ires, 2,  0},
-/*2*/ {EtMo, {(ul)mcNum},      nres, 3,  0},
-/*3*/ {EtSy, {(ul)','},        sres, 1,  4},
-/*4*/ {EtSy, {(ul)';'},        sres, 5,  0},
-/*5*/ {EtSy, {(ul)tVAR},       NULL, 6,  9},
-/*6*/ {EtMo, {(ul)mcIdent},    ires, 7,  0},
-/*7*/ {EtSy, {(ul)','},        sres, 6,  8},
-/*8*/ {EtSy, {(ul)';'},        sres, 9,  0},
-/*9*/ {EtSy, {(ul)tPRC},       NULL, 10, 14},
-/*10*/{EtMo, {(ul)mcIdent},    ires, 11, 0},
-/*11*/{EtSy, {(ul)';'},        sres, 12, 0},
-/*12*/{EtGr, {(ul)g_block},    NULL, 13, 0},
-/*13*/{EtSy, {(ul)';'},        sres, 9,  0},
-/*14*/{EtNl, {(ul)0},          NULL, 15, 0},
-/*15*/{EtGr, {(ul)g_statement},NULL, 16, 16},
-/*16*/{EtEn, {(ul)0},          NULL, 0,  0}
+/*0*/ {EtSy, {(ul)tCST},       NULL, 1,  6},
+/*1*/ {EtMo, {(ul)mcIdent},    nprop_cnst, 2,  0},
+/*2*/ {EtSy, {(ul)'='},        sres, 3,  0},
+/*3*/ {EtMo, {(ul)mcNum},      nres, 4,  0},
+/*4*/ {EtSy, {(ul)','},        sres, 1,  5},
+/*5*/ {EtSy, {(ul)';'},        sres, 6,  0},
+
+/*6*/ {EtSy, {(ul)tVAR},       NULL, 7,  10},
+/*7*/ {EtMo, {(ul)mcIdent},    ires, 8,  0},
+/*8*/ {EtSy, {(ul)','},        sres, 7,  9},
+/*9*/ {EtSy, {(ul)';'},        sres, 10, 0},
+
+/*10*/ {EtSy, {(ul)tPRC},       NULL,11, 15},
+/*11*/{EtMo, {(ul)mcIdent},    ires, 12, 0},
+/*12*/{EtSy, {(ul)';'},        sres, 13, 0},
+/*13*/{EtGr, {(ul)g_block},    NULL, 14, 0},
+/*14*/{EtSy, {(ul)';'},        sres, 10, 0},
+
+/*15*/{EtNl, {(ul)0},          NULL, 16, 0},
+/*16*/{EtGr, {(ul)g_statement},NULL, 17, 17},
+/*17*/{EtEn, {(ul)0},          NULL, 0,  0}
 };
 struct Edge g_cond[] = {
 /*0*/ {EtSy, {(ul)tODD},    NULL, 1,  2},
@@ -158,15 +164,14 @@ int sres()
     return 1;
 }
 
-int init_namelist()
+void init_namelist()
 {
     main_proc.et=VProc;
     if ((main_proc.loc_namelist=create_list()) == NULL) {
-        fprintf(stderr, "Failed to create local main_proc");
-        return -1;
+        fprintf(stderr, "Failed to create local main_proc\n");
+        exit(-1);
     }
     curr_proc=&main_proc;
-    return 0;
 }
 
 static struct name_prop* create_nprop(char *name)
@@ -278,4 +283,26 @@ static struct name_prop* global_search_nprop(char *name)
         proc=proc->parent_proc;
     }
     return NULL;
+}
+
+static int nprop_cnst()
+{
+    struct name_prop *nprop;
+    struct list_head *list;
+
+    if (search_nprop(curr_proc, Morph.Val.pStr)) {
+        //printf("error Line %d, Column %d: redefinition of %s\n",
+        //       Morph.posLine, Morph.posCol, Morph.Val.pStr);
+        printf("error: redefinition of %s\n", Morph.Val.pStr);
+        return 0;
+    }
+    nprop=create_nprop(Morph.Val.pStr);
+    list=curr_proc->loc_namelist;
+    if (list_insert_tail(list, nprop) == 0) {
+        fprintf(stderr, "failed to insert nprop into list\n");
+        exit(-1);
+    }
+
+
+    return 1;
 }
