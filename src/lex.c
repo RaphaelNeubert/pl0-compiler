@@ -80,7 +80,7 @@ static void fslb(void); // schreiben, lesen, beenden
                         //
 stateFunc vSMatrix[][8] = {
 /*          SoZei    Ziffer  Buchstabe     :            =           <           >         sonst */
-/* Z0 */ {{9,fslb},{1,fsl},  {2,fgl},    {3,fsl},    {9,fsl},    {4,fsl},    {5,fsl},    {0,fl}},
+/* Z0 */ {{9,fslb},{1,fsl},  {2,fgl},    {3,fsl},    {9,fslb},    {4,fsl},    {5,fsl},    {0,fl}},
 /* Z1 */ {{9,fb},  {1,fsl},  {9,fb},     {9,fb},     {9,fb},     {9,fb},     {9,fb},     {9,fb}},
 /* Z2 */ {{9,fb},  {2,fsl},  {2,fgl},    {9,fb},     {9,fb},     {9,fb},     {9,fb},     {9,fb}},
 /* Z3 */ {{9,fb},  {9,fb},   {9,fb},     {9,fb},     {6,fsl},    {9,fb},     {9,fb},     {9,fb}},
@@ -93,6 +93,7 @@ stateFunc vSMatrix[][8] = {
 
 static void fb(void)
 {
+    printf("Zustand: %d\n",Z);
     switch(Z) 
     {
         case 3: // :
