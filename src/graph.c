@@ -40,29 +40,27 @@ struct Edge g_expr[];
 struct Edge g_statement[];
 
 
-int ires();
-int nres();
-int sres();
 static int nprop_cnst();
+static int add_cnst();
 
 struct Edge g_block[] = {
 /*0*/ {EtSy, {(ul)tCST},       NULL, 1,  6},
 /*1*/ {EtMo, {(ul)mcIdent},    nprop_cnst, 2,  0},
-/*2*/ {EtSy, {(ul)'='},        sres, 3,  0},
-/*3*/ {EtMo, {(ul)mcNum},      nres, 4,  0},
-/*4*/ {EtSy, {(ul)','},        sres, 1,  5},
-/*5*/ {EtSy, {(ul)';'},        sres, 6,  0},
+/*2*/ {EtSy, {(ul)'='},        NULL, 3,  0},
+/*3*/ {EtMo, {(ul)mcNum},      add_cnst, 4,  0},
+/*4*/ {EtSy, {(ul)','},        NULL, 1,  5},
+/*5*/ {EtSy, {(ul)';'},        NULL, 6,  0},
 
 /*6*/ {EtSy, {(ul)tVAR},       NULL, 7,  10},
-/*7*/ {EtMo, {(ul)mcIdent},    ires, 8,  0},
-/*8*/ {EtSy, {(ul)','},        sres, 7,  9},
-/*9*/ {EtSy, {(ul)';'},        sres, 10, 0},
+/*7*/ {EtMo, {(ul)mcIdent},    NULL, 8,  0},
+/*8*/ {EtSy, {(ul)','},        NULL, 7,  9},
+/*9*/ {EtSy, {(ul)';'},        NULL, 10, 0},
 
 /*10*/ {EtSy, {(ul)tPRC},       NULL,11, 15},
-/*11*/{EtMo, {(ul)mcIdent},    ires, 12, 0},
-/*12*/{EtSy, {(ul)';'},        sres, 13, 0},
+/*11*/{EtMo, {(ul)mcIdent},    NULL, 12, 0},
+/*12*/{EtSy, {(ul)';'},        NULL, 13, 0},
 /*13*/{EtGr, {(ul)g_block},    NULL, 14, 0},
-/*14*/{EtSy, {(ul)';'},        sres, 10, 0},
+/*14*/{EtSy, {(ul)';'},        NULL, 10, 0},
 
 /*15*/{EtNl, {(ul)0},          NULL, 16, 0},
 /*16*/{EtGr, {(ul)g_statement},NULL, 17, 17},
@@ -119,50 +117,33 @@ struct Edge g_prog[] = {
 };
 
 struct Edge g_fact[] = {
-/*0*/ {EtMo, {(ul)mcIdent}, ires, 5, 1},
-/*1*/ {EtMo, {(ul)mcNum},   nres, 5, 2},
-/*2*/ {EtSy, {(ul)'('},     sres, 3, 0},
+/*0*/ {EtMo, {(ul)mcIdent}, NULL, 5, 1},
+/*1*/ {EtMo, {(ul)mcNum},   NULL, 5, 2},
+/*2*/ {EtSy, {(ul)'('},     NULL, 3, 0},
 /*3*/ {EtGr, {(ul)g_expr},  NULL, 4, 0},
-/*4*/ {EtSy, {(ul)')'},     sres, 5, 0},
+/*4*/ {EtSy, {(ul)')'},     NULL, 5, 0},
 /*5*/ {EtEn, {(ul)0},       NULL, 0, 0}
 };
 struct Edge g_term[] = {
 /*0*/ {EtGr, {(ul)g_fact}, NULL, 1, 0},
-/*1*/ {EtSy, {(ul)'*'},    sres, 2, 3},
+/*1*/ {EtSy, {(ul)'*'},    NULL, 2, 3},
 /*2*/ {EtGr, {(ul)g_fact}, NULL, 1, 0},
-/*3*/ {EtSy, {(ul)'/'},    sres, 4, 5},
+/*3*/ {EtSy, {(ul)'/'},    NULL, 4, 5},
 /*4*/ {EtGr, {(ul)g_fact}, NULL, 1, 0},
 /*5*/ {EtEn, {(ul)0},      NULL, 0, 0}
 };
 
 struct Edge g_expr[] = {
-/*0*/ {EtSy, {(ul)'-'},    sres, 1, 2}, 
+/*0*/ {EtSy, {(ul)'-'},    NULL, 1, 2}, 
 /*1*/ {EtGr, {(ul)g_term}, NULL, 3, 0},
 /*2*/ {EtGr, {(ul)g_term}, NULL, 3, 0},
-/*3*/ {EtSy, {(ul)'+'},    sres, 4, 5},
+/*3*/ {EtSy, {(ul)'+'},    NULL, 4, 5},
 /*4*/ {EtGr, {(ul)g_term}, NULL, 3, 0},
-/*5*/ {EtSy, {(ul)'-'},    sres, 6, 7}, 
+/*5*/ {EtSy, {(ul)'-'},    NULL, 6, 7}, 
 /*6*/ {EtGr, {(ul)g_term}, NULL, 3, 0},
 /*7*/ {EtEn, {(ul)0},      NULL, 0, 0}
 };
 
-
-int ires()
-{
-    printf("Identifier: %s wurde geparsed\n",Morph.Val.pStr);
-    return 1;
-}
-
-int nres()
-{
-    printf("Zahl: %ld wurde geparsed\n",Morph.Val.Num);
-    return 1;
-}
-int sres()
-{
-    printf("Symbol: %c wurde geparsed\n",(char) Morph.Val.Symb);
-    return 1;
-}
 
 void init_namelist()
 {
@@ -176,6 +157,7 @@ void init_namelist()
 
 static struct name_prop* create_nprop(char *name)
 {
+    char *new_name;
     struct name_prop *nprop=malloc(sizeof(struct name_prop));
     if (!nprop) {
         perror("malloc");
@@ -185,7 +167,13 @@ static struct name_prop* create_nprop(char *name)
     nprop->idx_proc=curr_proc->idx_proc;
     nprop->vstrct=NULL;
     nprop->len=strlen(name);
-    nprop->name=name;
+    new_name=malloc(nprop->len+1);
+    if (!new_name) {
+        perror("malloc");
+        exit(-1);
+    }
+    strcpy(new_name, name);
+    nprop->name=new_name;
 
     return nprop;
 }
@@ -220,7 +208,7 @@ static int create_var()
 
     return var->displ;
 }
-static struct vtype_const* create_const(long val)
+static struct vtype_const* create_const(long val, short inc)
 {
     static int idx=0;
     struct vtype_const *cnst=malloc(sizeof(struct vtype_const));
@@ -232,7 +220,7 @@ static struct vtype_const* create_const(long val)
     cnst->val=val;
     cnst->idx=idx;
     //prepare index for next function call
-    idx++;
+    idx+=inc;
     
     return cnst;
 }
@@ -254,11 +242,12 @@ static struct name_prop* search_nprop(struct vtype_proc *proc, char *name)
 static struct vtype_const* search_const(long val)
 {
     struct list_head *list=main_proc.loc_namelist;
+    struct vtype_const *cnst;
 
     struct name_prop *nprop=list_get_first(list);
     while(nprop) {
-        if (((struct vtype_const*)nprop->vstrct)->et == VConst &&
-                ((struct vtype_const*)nprop->vstrct)->val == val)
+        cnst=nprop->vstrct;
+        if (cnst && cnst->et == VConst && cnst->val == val)
             return nprop->vstrct;
             
         nprop=list_get_next(list);
@@ -284,11 +273,26 @@ static struct name_prop* global_search_nprop(char *name)
     }
     return NULL;
 }
+static void display_list(struct vtype_proc *proc)
 
+{
+    struct list_head *list=proc->loc_namelist;
+    struct name_prop *nprop=list_get_first(list);
+    for (int i=0; nprop; i++) {
+        printf("List Name Element %d: %s\n", i, nprop->name);
+        struct vtype_const *cnst=nprop->vstrct;
+        printf("index const: %d, value: %ld\n", cnst->idx,cnst->val);
+        nprop=list_get_next(list);
+    }
+}
+
+// creates and appends nprop to current procedure
 static int nprop_cnst()
 {
     struct name_prop *nprop;
     struct list_head *list;
+
+    display_list(curr_proc);
 
     if (search_nprop(curr_proc, Morph.Val.pStr)) {
         //printf("error Line %d, Column %d: redefinition of %s\n",
@@ -297,6 +301,8 @@ static int nprop_cnst()
         return 0;
     }
     nprop=create_nprop(Morph.Val.pStr);
+    printf("created nprop: %s\n",nprop->name);
+    nprop->et=VConst;
     list=curr_proc->loc_namelist;
     if (list_insert_tail(list, nprop) == 0) {
         fprintf(stderr, "failed to insert nprop into list\n");
@@ -304,5 +310,30 @@ static int nprop_cnst()
     }
 
 
+    return 1;
+}
+
+// creates const type and sets last nprop point to it
+static int add_cnst()
+{
+    struct vtype_const *new_cnst;
+    struct list_head *list;
+    struct name_prop *nprop;
+    long num=Morph.Val.Num;
+    struct vtype_const *cnst;
+
+    cnst=search_const(num);
+    if (cnst) {
+        new_cnst=create_const(num,0); //don't increment idx
+        new_cnst->idx=cnst->idx;
+        puts("Const already found, add existing index to cnst object");
+    }
+    else {
+        new_cnst=create_const(num,1); //create and increment idx
+        puts("Const not found, use new index");
+    }
+    list=curr_proc->loc_namelist;
+    nprop=list_get_last(list);
+    nprop->vstrct=new_cnst;
     return 1;
 }

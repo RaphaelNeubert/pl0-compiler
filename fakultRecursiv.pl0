@@ -1,4 +1,4 @@
-const max = 100;
+const max = 100, ab=10, c=20, d=10, e=100, f=3;
 var a,fac;
 
 Procedure p1;

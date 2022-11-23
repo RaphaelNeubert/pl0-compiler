@@ -93,7 +93,6 @@ stateFunc vSMatrix[][8] = {
 
 static void fb(void)
 {
-    printf("Zustand: %d\n",Z);
     switch(Z) 
     {
         case 3: // :

@@ -30,9 +30,9 @@ int pars(struct Edge* p_graph)
                 succ=(Morph.mc==p_edge->edge_val.M);
                 break;
             case EtGr:
-                puts("going in");
+                //puts("going in");
                 succ=pars(p_edge->edge_val.G);
-                puts("came out");
+                //puts("came out");
                 break;
             case EtEn:
                 return 1;
@@ -46,13 +46,13 @@ int pars(struct Edge* p_graph)
             // akzeptiere Token
             if (p_edge->edge_type == EtSy || p_edge->edge_type == EtMo)
                 lex();
-            printf("std: %d\n", p_edge->i_next);
+            //printf("std: %d\n", p_edge->i_next);
             p_edge=p_graph+p_edge->i_next;
         }
         else {
             // Alternativbogen probieren
             if (p_edge->i_alt != 0) {
-                printf("alt: %d\n", p_edge->i_alt);
+                //printf("alt: %d\n", p_edge->i_alt);
                 p_edge=p_graph+p_edge->i_alt;
             }
             else
