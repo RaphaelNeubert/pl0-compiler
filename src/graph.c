@@ -42,6 +42,9 @@ struct Edge g_statement[];
 
 static int nprop_cnst();
 static int add_cnst();
+static int add_var();
+static int add_proc();
+static int delete_nlist();
 
 struct Edge g_block[] = {
 /*0*/ {EtSy, {(ul)tCST},       NULL, 1,  6},
@@ -52,15 +55,15 @@ struct Edge g_block[] = {
 /*5*/ {EtSy, {(ul)';'},        NULL, 6,  0},
 
 /*6*/ {EtSy, {(ul)tVAR},       NULL, 7,  10},
-/*7*/ {EtMo, {(ul)mcIdent},    NULL, 8,  0},
+/*7*/ {EtMo, {(ul)mcIdent},    add_var, 8,  0},
 /*8*/ {EtSy, {(ul)','},        NULL, 7,  9},
 /*9*/ {EtSy, {(ul)';'},        NULL, 10, 0},
 
 /*10*/ {EtSy, {(ul)tPRC},       NULL,11, 15},
-/*11*/{EtMo, {(ul)mcIdent},    NULL, 12, 0},
+/*11*/{EtMo, {(ul)mcIdent},    add_proc, 12, 0},
 /*12*/{EtSy, {(ul)';'},        NULL, 13, 0},
 /*13*/{EtGr, {(ul)g_block},    NULL, 14, 0},
-/*14*/{EtSy, {(ul)';'},        NULL, 10, 0},
+/*14*/{EtSy, {(ul)';'},        delete_nlist, 10, 0},
 
 /*15*/{EtNl, {(ul)0},          NULL, 16, 0},
 /*16*/{EtGr, {(ul)g_statement},NULL, 17, 17},
@@ -111,8 +114,8 @@ struct Edge g_statement[] = {
 };
 
 struct Edge g_prog[] = {
-/*0*/ {EtGr, {(ul)g_block}, NULL, 1, 0},
-/*1*/ {EtSy, {(ul)'.'},    NULL, 2, 0},
+/*0*/ {EtGr, {(ul)g_block},NULL, 1, 0},
+/*1*/ {EtSy, {(ul)'.'},    delete_nlist, 2, 0},
 /*2*/ {EtEn, {(ul)0},      NULL, 0, 0}
 };
 
@@ -195,7 +198,7 @@ static struct vtype_proc* create_proc(struct vtype_proc* parent)
 
     return proc;
 }
-static int create_var()
+static struct vtype_var* create_var()
 {
     struct vtype_var *var=malloc(sizeof(struct vtype_var));
     if (!var) {
@@ -206,7 +209,7 @@ static int create_var()
     var->displ=curr_proc->curr_var_offset;
     curr_proc->curr_var_offset+=4;
 
-    return var->displ;
+    return var;
 }
 static struct vtype_const* create_const(long val, short inc)
 {
@@ -286,31 +289,38 @@ static void display_list(struct vtype_proc *proc)
     }
 }
 
-// creates and appends nprop to current procedure
-static int nprop_cnst()
+// creates, checks for redefinition and inserts nprop
+static struct name_prop* create_insert_nprop(enum entry_type et)
 {
     struct name_prop *nprop;
     struct list_head *list;
 
-    display_list(curr_proc);
+    //display_list(curr_proc);
 
     if (search_nprop(curr_proc, Morph.Val.pStr)) {
         //printf("error Line %d, Column %d: redefinition of %s\n",
         //       Morph.posLine, Morph.posCol, Morph.Val.pStr);
         printf("error: redefinition of %s\n", Morph.Val.pStr);
-        return 0;
+        return NULL;
     }
     nprop=create_nprop(Morph.Val.pStr);
     printf("created nprop: %s\n",nprop->name);
-    nprop->et=VConst;
+    nprop->et=et;
     list=curr_proc->loc_namelist;
     if (list_insert_tail(list, nprop) == 0) {
         fprintf(stderr, "failed to insert nprop into list\n");
         exit(-1);
     }
 
+    return nprop;
+}
 
-    return 1;
+// creates and appends nprop to current procedure
+static int nprop_cnst()
+{
+    if (create_insert_nprop(VConst))
+        return 1;
+    return 0;
 }
 
 // creates const type and sets last nprop point to it
@@ -335,5 +345,68 @@ static int add_cnst()
     list=curr_proc->loc_namelist;
     nprop=list_get_last(list);
     nprop->vstrct=new_cnst;
+    return 1;
+}
+
+static int add_var()
+{
+    struct vtype_var *var;
+    struct name_prop *nprop=create_insert_nprop(VVar);
+    if (!nprop)
+        return 0;
+    var=create_var();
+    nprop->vstrct=var;
+    return 1;
+}
+
+static int add_proc()
+{
+    struct vtype_proc *proc;
+    struct name_prop *nprop=create_insert_nprop(VProc);
+    if (!nprop)
+        return 0;
+    proc=create_proc(curr_proc);
+    nprop->vstrct=proc;
+    curr_proc=proc;
+    return 1;
+}
+
+static void rec_list_del(struct list_head *list)
+{
+    struct name_prop *item=list_get_first(list);
+    while (item) {
+        if (item->et == VProc) {
+            rec_list_del(((struct vtype_proc*)item->vstrct)->loc_namelist);
+            free(item->vstrct);
+        }
+        else {
+            free(item->vstrct);
+        }
+        free(item->name);
+        free(item);
+        list_remove_curr(list);
+
+        item=list_get_first(list);
+    }
+}
+
+static int delete_nlist()
+{
+    puts("Delete was called");
+    //rec_list_del(main_proc.loc_namelist);
+    struct list_head *list=curr_proc->loc_namelist;
+    struct name_prop *item=list_get_first(list);
+    while (item) {
+        puts("delete item");
+        free(item->vstrct);
+        free(item->name);
+        free(item);
+        list_remove_curr(list);
+
+        item=list_get_first(list);
+    }
+    free(list);
+    curr_proc=curr_proc->parent_proc;
+
     return 1;
 }
