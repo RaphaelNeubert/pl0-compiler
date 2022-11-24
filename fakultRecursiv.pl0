@@ -3,6 +3,11 @@ var a,fac;
 
 Procedure p1;
  var b,c;
+ Procedure p2;
+   const f=100;
+   begin
+   !f
+   end;
  begin
   b := a;
   a := a-1;

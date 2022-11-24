@@ -242,7 +242,7 @@ static struct name_prop* search_nprop(struct vtype_proc *proc, char *name)
     return NULL;
 }
 
-static struct vtype_const* search_const(long val)
+struct vtype_const* search_const(long val)
 {
     struct list_head *list=main_proc.loc_namelist;
     struct vtype_const *cnst;
@@ -257,7 +257,7 @@ static struct vtype_const* search_const(long val)
     }
     return NULL;
 }
-static struct name_prop* global_search_nprop(char *name)
+struct name_prop* global_search_nprop(char *name)
 {
     struct vtype_proc *proc=curr_proc;
     struct name_prop *nprop;
@@ -277,14 +277,28 @@ static struct name_prop* global_search_nprop(char *name)
     return NULL;
 }
 static void display_list(struct vtype_proc *proc)
-
 {
     struct list_head *list=proc->loc_namelist;
     struct name_prop *nprop=list_get_first(list);
-    for (int i=0; nprop; i++) {
-        printf("List Name Element %d: %s\n", i, nprop->name);
-        struct vtype_const *cnst=nprop->vstrct;
-        printf("index const: %d, value: %ld\n", cnst->idx,cnst->val);
+    while (nprop) {
+        switch (nprop->et) {
+            case VProc:
+                printf("%04d: procedure %s\n",proc->idx_proc,nprop->name);
+                break;
+            case VConst:
+                struct vtype_const *cnst=nprop->vstrct;
+                printf("%04d: Const name: %s, idx: %d, val: %ld\n",
+                        proc->idx_proc,nprop->name, cnst->idx, cnst->val);
+                break;
+            case VVar:
+                struct vtype_var *var=nprop->vstrct;
+                printf("%04d: Var name: %s, disp: %d\n", proc->idx_proc,nprop->name, var->displ);
+                break;
+            default:
+                puts("type unknown");
+                break;
+        }
+
         nprop=list_get_next(list);
     }
 }
@@ -295,7 +309,7 @@ static struct name_prop* create_insert_nprop(enum entry_type et)
     struct name_prop *nprop;
     struct list_head *list;
 
-    //display_list(curr_proc);
+    //dcnstisplay_list(curr_proc);
 
     if (search_nprop(curr_proc, Morph.Val.pStr)) {
         //printf("error Line %d, Column %d: redefinition of %s\n",
@@ -304,7 +318,6 @@ static struct name_prop* create_insert_nprop(enum entry_type et)
         return NULL;
     }
     nprop=create_nprop(Morph.Val.pStr);
-    printf("created nprop: %s\n",nprop->name);
     nprop->et=et;
     list=curr_proc->loc_namelist;
     if (list_insert_tail(list, nprop) == 0) {
@@ -318,9 +331,7 @@ static struct name_prop* create_insert_nprop(enum entry_type et)
 // creates and appends nprop to current procedure
 static int nprop_cnst()
 {
-    if (create_insert_nprop(VConst))
-        return 1;
-    return 0;
+    if (create_insert_nprop(VConst) != NULL);
 }
 
 // creates const type and sets last nprop point to it
@@ -336,11 +347,9 @@ static int add_cnst()
     if (cnst) {
         new_cnst=create_const(num,0); //don't increment idx
         new_cnst->idx=cnst->idx;
-        puts("Const already found, add existing index to cnst object");
     }
     else {
         new_cnst=create_const(num,1); //create and increment idx
-        puts("Const not found, use new index");
     }
     list=curr_proc->loc_namelist;
     nprop=list_get_last(list);
@@ -392,12 +401,13 @@ static void rec_list_del(struct list_head *list)
 
 static int delete_nlist()
 {
+    puts("Displaying list:");
+    display_list(curr_proc);
     puts("Delete was called");
     //rec_list_del(main_proc.loc_namelist);
     struct list_head *list=curr_proc->loc_namelist;
     struct name_prop *item=list_get_first(list);
     while (item) {
-        puts("delete item");
         free(item->vstrct);
         free(item->name);
         free(item);
