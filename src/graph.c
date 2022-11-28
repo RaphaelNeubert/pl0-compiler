@@ -3,6 +3,7 @@
 #include <string.h>
 #include "graph.h"
 #include "linkedlist.h"
+#include "code_gen.h"
 
 enum entry_type {NProp, VConst, VVar, VProc};
 
@@ -35,9 +36,12 @@ struct vtype_proc {
 
 struct vtype_proc main_proc;
 struct vtype_proc *curr_proc;
+static int *cnst_buf;
+static int cnst_buf_idx; //position to write to next
+static int cnst_buf_size;
 
-struct Edge g_expr[];
-struct Edge g_statement[];
+static struct Edge g_expr[];
+static struct Edge g_statement[];
 
 
 static int nprop_cnst();
@@ -45,8 +49,9 @@ static int add_cnst();
 static int add_var();
 static int add_proc();
 static int delete_nlist();
+static int end_prog();
 
-struct Edge g_block[] = {
+static struct Edge g_block[] = {
 /*0*/ {EtSy, {(ul)tCST},       NULL, 1,  6},
 /*1*/ {EtMo, {(ul)mcIdent},    nprop_cnst, 2,  0},
 /*2*/ {EtSy, {(ul)'='},        NULL, 3,  0},
@@ -69,7 +74,7 @@ struct Edge g_block[] = {
 /*16*/{EtGr, {(ul)g_statement},NULL, 17, 17},
 /*17*/{EtEn, {(ul)0},          NULL, 0,  0}
 };
-struct Edge g_cond[] = {
+static struct Edge g_cond[] = {
 /*0*/ {EtSy, {(ul)tODD},    NULL, 1,  2},
 /*1*/ {EtGr, {(ul)g_expr},  NULL, 9,  0},
 /*2*/ {EtGr, {(ul)g_expr},  NULL, 3,  0},
@@ -82,7 +87,7 @@ struct Edge g_cond[] = {
 /*9*/ {EtEn, {(ul)0},       NULL, 0,  0}
 };
 
-struct Edge g_statement[] = {
+static struct Edge g_statement[] = {
 // a := b+c
 /*0*/ {EtMo, {(ul)mcIdent},    NULL, 1,  3},
 /*1*/ {EtSy, {(ul)tErg},       NULL, 2,  0},
@@ -115,11 +120,11 @@ struct Edge g_statement[] = {
 
 struct Edge g_prog[] = {
 /*0*/ {EtGr, {(ul)g_block},NULL, 1, 0},
-/*1*/ {EtSy, {(ul)'.'},    delete_nlist, 2, 0},
+/*1*/ {EtSy, {(ul)'.'},    end_prog, 2, 0},
 /*2*/ {EtEn, {(ul)0},      NULL, 0, 0}
 };
 
-struct Edge g_fact[] = {
+static struct Edge g_fact[] = {
 /*0*/ {EtMo, {(ul)mcIdent}, NULL, 5, 1},
 /*1*/ {EtMo, {(ul)mcNum},   NULL, 5, 2},
 /*2*/ {EtSy, {(ul)'('},     NULL, 3, 0},
@@ -127,7 +132,7 @@ struct Edge g_fact[] = {
 /*4*/ {EtSy, {(ul)')'},     NULL, 5, 0},
 /*5*/ {EtEn, {(ul)0},       NULL, 0, 0}
 };
-struct Edge g_term[] = {
+static struct Edge g_term[] = {
 /*0*/ {EtGr, {(ul)g_fact}, NULL, 1, 0},
 /*1*/ {EtSy, {(ul)'*'},    NULL, 2, 3},
 /*2*/ {EtGr, {(ul)g_fact}, NULL, 1, 0},
@@ -136,7 +141,7 @@ struct Edge g_term[] = {
 /*5*/ {EtEn, {(ul)0},      NULL, 0, 0}
 };
 
-struct Edge g_expr[] = {
+static struct Edge g_expr[] = {
 /*0*/ {EtSy, {(ul)'-'},    NULL, 1, 2}, 
 /*1*/ {EtGr, {(ul)g_term}, NULL, 3, 0},
 /*2*/ {EtGr, {(ul)g_term}, NULL, 3, 0},
@@ -156,6 +161,12 @@ void init_namelist()
         exit(-1);
     }
     curr_proc=&main_proc;
+    cnst_buf=malloc(64*sizeof(int));
+    if (!cnst_buf) {
+        perror("malloc");
+        exit(-1);
+    }
+    cnst_buf_size=64*sizeof(int);
 }
 
 static struct name_prop* create_nprop(char *name)
@@ -242,7 +253,7 @@ static struct name_prop* search_nprop(struct vtype_proc *proc, char *name)
     return NULL;
 }
 
-struct vtype_const* search_const(long val)
+static struct vtype_const* search_const(long val)
 {
     struct list_head *list=main_proc.loc_namelist;
     struct vtype_const *cnst;
@@ -257,7 +268,7 @@ struct vtype_const* search_const(long val)
     }
     return NULL;
 }
-struct name_prop* global_search_nprop(char *name)
+static struct name_prop* global_search_nprop(char *name)
 {
     struct vtype_proc *proc=curr_proc;
     struct name_prop *nprop;
@@ -331,7 +342,35 @@ static struct name_prop* create_insert_nprop(enum entry_type et)
 // creates and appends nprop to current procedure
 static int nprop_cnst()
 {
-    if (create_insert_nprop(VConst) != NULL);
+    return (create_insert_nprop(VConst) != NULL);
+}
+static int search_const_buf(int num)
+{
+    for (int i=0; i<cnst_buf_idx; i++) {
+        if (cnst_buf[i] == num)
+            return i;
+    }
+    return -1; // not found
+}
+static void save_add_cnst(int num)
+{
+    if (cnst_buf_size < (cnst_buf_idx+1)*sizeof(int)) {
+        cnst_buf=realloc(cnst_buf, cnst_buf_size+=64*sizeof(int));
+        if (!cnst_buf) {
+            perror("failed to realloc memory for const buffer");
+            exit(-1);
+        }
+    }
+    cnst_buf[cnst_buf_idx++]=num;
+}
+static int add_cnst_buf() 
+{
+    int num=Morph.Val.Num;
+    int idx=search_const_buf(num);
+    if (idx < 0) { // not found
+        save_add_cnst(num);
+    }
+    return 1;
 }
 
 // creates const type and sets last nprop point to it
@@ -354,7 +393,8 @@ static int add_cnst()
     list=curr_proc->loc_namelist;
     nprop=list_get_last(list);
     nprop->vstrct=new_cnst;
-    return 1;
+
+    return add_cnst_buf();
 }
 
 static int add_var()
@@ -418,5 +458,32 @@ static int delete_nlist()
     free(list);
     curr_proc=curr_proc->parent_proc;
 
+    return 1;
+}
+
+// suchen, ggf. anlegen, puConst(ConstIndex)
+static int fac_num()
+{
+    int val=Morph.Val.Num;
+    int idx=search_const_buf(val);
+    if (idx >= 0) {
+        generate_code(puConst, idx);
+    }
+    else {
+        save_add_cnst(val);
+        generate_code(puConst,cnst_buf_idx-1);
+    }
+    return 1;
+}
+
+//TODO finish
+static int end_prog()
+{
+    delete_nlist();
+    puts("-------check cnst_buf--------");
+    for (int i=0; i<cnst_buf_idx; i++) {
+        printf("idx: %d, val: %d\n", i, cnst_buf[i]);
+    }
+    free(cnst_buf);
     return 1;
 }

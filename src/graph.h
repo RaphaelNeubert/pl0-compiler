@@ -26,38 +26,7 @@ struct Edge
     int i_alt;               // Alternativbogen, wenn Bogen nicht akzeptiert
 };
 
-enum entry_type {NProp, VConst, VVar, VProc};
-
-struct name_prop {
-    enum entry_type et; 
-    short idx_proc;
-    void *vstrct;
-    int len;
-    char *name;
-};
-
-struct vtype_const {
-    enum entry_type et; 
-    long val;
-    int idx;
-};
-
-struct vtype_var {
-    enum entry_type et; 
-    int displ;          //relative address
-};
-
-struct vtype_proc {
-    enum entry_type et; 
-    short idx_proc;
-    struct vtype_proc *parent_proc;
-    struct list_head *loc_namelist; // locale name list
-    int curr_var_offset;
-};
-
 
 extern struct Edge g_prog[];
 void init_namelist();
 
-struct name_prop* global_search_nprop(char *name);
-struct vtype_const* search_const(long val);
