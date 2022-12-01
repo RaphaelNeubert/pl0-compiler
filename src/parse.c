@@ -1,11 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "graph.h"
 
 typedef unsigned long ul;
 
 
 tMorph Morph={0};
+FILE *pOF;
 
 
 int pars(struct Edge* p_graph)
@@ -64,11 +66,36 @@ int pars(struct Edge* p_graph)
 
 int main(int argc, char **argv)
 {
+    char vName[128+1];
+    char *oName;
+    FILE *pIF;
     if (argc != 2) {
         puts("usage: cpl0 <filename>");
         exit(0);
     }
-    initLex(argv[1]);
+    strcpy(vName,argv[1]);
+    if (strcmp(vName+strlen(vName)-4, ".pl0"))
+        strcat(vName, ".pl0");
+
+    pIF=fopen(vName, "r+t");
+    if (pIF == NULL) {
+        perror("fopen");
+        return FAIL;
+    }
+    vName[strlen(vName)-4]='\0';
+    if (!(oName=strrchr(vName,'/')))
+        oName=vName;
+    oName++;
+    strcat(oName,".cl0");
+    puts(oName);
+    pOF=fopen(oName, "w");
+    if (pOF == NULL) {
+        perror("fopen");
+        return FAIL;
+    }
+    long x=0L;
+    fwrite(&x,sizeof(int32_t),1,pOF);
+    initLex(pIF);
     init_namelist();
 
     int res = pars(g_prog);
@@ -79,10 +106,7 @@ int main(int argc, char **argv)
         printf("Zeile: %d, Spalte %d\n",Morph.posLine, Morph.posCol);
     }
         
-
-    //do {
-    //    lex();
-    //    printf("lexres char: %c,int: %ld\n",Morph.Val.Num ,Morph.Val.Num);
-    //} while (Morph.mc != mcEmpty);
+    fclose(pIF);
+    fclose(pOF);
     return 0;
 }

@@ -27,6 +27,7 @@ struct keywrd
     enum keywrdtype wrdtype;
 };
 
+
 // Zeichenklassenvektor
 static char vZKL[128] = {
 /*     0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
@@ -163,22 +164,10 @@ static void fslb(void)
     fb();
 }
 
-int initLex(char *fname)
+int initLex(FILE *f)
 {
-    char vName[128+1];
-
-    strcpy(vName,fname);
-    if (strstr(vName, ".pl0") == NULL) {
-        //append extension
-        strcat(vName, ".pl0");
-    }
-
-    pIF=fopen(vName, "r+t");
-    if (pIF == NULL) {
-        perror("fopen");
-        return FAIL;
-    }
-    X = fgetc(pIF); 
+    pIF=f;
+    X=fgetc(pIF); 
     return OK;
 }
 

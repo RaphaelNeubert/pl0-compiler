@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "graph.h"
+#include "parse.h"
 #include "linkedlist.h"
 #include "code_gen.h"
 
@@ -36,9 +37,10 @@ struct vtype_proc {
 
 struct vtype_proc main_proc;
 struct vtype_proc *curr_proc;
-static int *cnst_buf;
-static int cnst_buf_idx; //position to write to next
-static int cnst_buf_size;
+static int num_proc=1;
+static short *cnst_buf;
+static short cnst_buf_idx; //position to write to next
+static short cnst_buf_size;
 
 static struct Edge g_expr[];
 static struct Edge g_statement[];
@@ -50,6 +52,10 @@ static int add_var();
 static int add_proc();
 static int delete_nlist();
 static int end_prog();
+static int start_proc();
+static int end_proc();
+static int fac_num();
+static int st_putval();
 
 static struct Edge g_block[] = {
 /*0*/ {EtSy, {(ul)tCST},       NULL, 1,  6},
@@ -70,8 +76,8 @@ static struct Edge g_block[] = {
 /*13*/{EtGr, {(ul)g_block},    NULL, 14, 0},
 /*14*/{EtSy, {(ul)';'},        delete_nlist, 10, 0},
 
-/*15*/{EtNl, {(ul)0},          NULL, 16, 0},
-/*16*/{EtGr, {(ul)g_statement},NULL, 17, 17},
+/*15*/{EtNl, {(ul)0},          start_proc, 16, 0},
+/*16*/{EtGr, {(ul)g_statement},end_proc, 17, 17},
 /*17*/{EtEn, {(ul)0},          NULL, 0,  0}
 };
 static struct Edge g_cond[] = {
@@ -113,7 +119,7 @@ static struct Edge g_statement[] = {
 /*16*/{EtSy, {(ul)'?'},        NULL, 15, 17},
 // !
 /*17*/{EtSy, {(ul)'!'},        NULL, 18, 19},
-/*18*/{EtGr, {(ul)g_expr},     NULL, 19,  0},
+/*18*/{EtGr, {(ul)g_expr},     st_putval, 19,  0},
 
 /*19*/{EtEn, {(ul)0},          NULL, 0,  0} 
 };
@@ -126,7 +132,7 @@ struct Edge g_prog[] = {
 
 static struct Edge g_fact[] = {
 /*0*/ {EtMo, {(ul)mcIdent}, NULL, 5, 1},
-/*1*/ {EtMo, {(ul)mcNum},   NULL, 5, 2},
+/*1*/ {EtMo, {(ul)mcNum},   fac_num, 5, 2},
 /*2*/ {EtSy, {(ul)'('},     NULL, 3, 0},
 /*3*/ {EtGr, {(ul)g_expr},  NULL, 4, 0},
 /*4*/ {EtSy, {(ul)')'},     NULL, 5, 0},
@@ -161,7 +167,7 @@ void init_namelist()
         exit(-1);
     }
     curr_proc=&main_proc;
-    cnst_buf=malloc(64*sizeof(int));
+    cnst_buf=malloc(64*sizeof(short));
     if (!cnst_buf) {
         perror("malloc");
         exit(-1);
@@ -206,6 +212,7 @@ static struct vtype_proc* create_proc(struct vtype_proc* parent)
         exit(-1);
     }
     proc->curr_var_offset=0;
+    num_proc++;
 
     return proc;
 }
@@ -355,7 +362,7 @@ static int search_const_buf(int num)
 static void save_add_cnst(int num)
 {
     if (cnst_buf_size < (cnst_buf_idx+1)*sizeof(int)) {
-        cnst_buf=realloc(cnst_buf, cnst_buf_size+=64*sizeof(int));
+        cnst_buf=realloc(cnst_buf, cnst_buf_size+=64*sizeof(short));
         if (!cnst_buf) {
             perror("failed to realloc memory for const buffer");
             exit(-1);
@@ -461,6 +468,12 @@ static int delete_nlist()
     return 1;
 }
 
+//st 10
+static int st_putval()
+{
+    return generate_code(putVal);
+}
+
 // suchen, ggf. anlegen, puConst(ConstIndex)
 static int fac_num()
 {
@@ -475,15 +488,44 @@ static int fac_num()
     }
     return 1;
 }
+static int start_proc()
+{
+    int init_size=1024;
+    int len_code=0;
+    int pidx=curr_proc->idx_proc;
+    int len_var=curr_proc->curr_var_offset;
 
-//TODO finish
+    cbuf_start=malloc(init_size);
+    if (!cbuf_start) {
+        perror("malloc");
+        exit(-1);
+    }
+    cbuf_curr=cbuf_start;
+    cbuf_size=init_size;
+
+    generate_code(entryProc, len_code, pidx, len_var);
+    return 1;
+
+}
+static int end_proc()
+{
+    generate_code(retProc);
+
+    puts("---------printing Code Buffer----------");
+    for (char* byte=cbuf_start; byte!=cbuf_curr; byte++) {
+        printf(" %02hhX ",*byte);
+    }
+    puts("\n---------done------------");
+    write_code2file(curr_proc->curr_var_offset);
+    return 1;
+}
+
 static int end_prog()
 {
+    write_consts2file(cnst_buf,cnst_buf_idx);
+    write_num_proc2file(num_proc);
+
     delete_nlist();
-    puts("-------check cnst_buf--------");
-    for (int i=0; i<cnst_buf_idx; i++) {
-        printf("idx: %d, val: %d\n", i, cnst_buf[i]);
-    }
     free(cnst_buf);
     return 1;
 }

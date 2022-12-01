@@ -3,3 +3,6 @@ r
 *.gch
 *.out
 cpl0
+tests/*
+*.cl0
+outCl0
