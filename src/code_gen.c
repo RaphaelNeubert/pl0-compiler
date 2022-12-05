@@ -81,22 +81,23 @@ int write_code2file(int curr_var_offset)
   else
       return FAIL;
 }
-int write_consts2file(short *cnst_buf, short cnst_buf_idx)
+int write_consts2file(int *cnst_buf, int cnst_buf_idx)
 {
-    char buf[cnst_buf_idx*2*2];
-    char *bbuf=buf;
-    short len;
+    int len=cnst_buf_idx*sizeof(int);
+    //char buf[cnst_buf_idx*sizeof(int)];
+    //char *bbuf=buf;
 
-    for (short i=0; i<cnst_buf_idx; i++) {
-        printf("idx: %d, val: %d\n", i, cnst_buf[i]);
-        *bbuf++=(unsigned char)(((short)cnst_buf[i])&0xff);
-        *bbuf++=(unsigned char)(((short)cnst_buf[i])>>8);
-        *bbuf++=(unsigned char)(i&0xff);
-        *bbuf++=(unsigned char)(i>>8);
-    }
-    len=bbuf-buf;
-    printf("len: %d\n",len);
-    if (len==fwrite(buf,sizeof(char),len,pOF))
+    //for (int i=0; i<cnst_buf_idx; i++) {
+    //    printf("idx: %d, val: %d\n", i, cnst_buf[i]);
+    //    *bbuf++=(unsigned char)(cnst_buf[i]&0xff);
+    //    *bbuf++=(unsigned char)((cnst_buf[i]>>8)&0xff);
+    //    *bbuf++=(unsigned char)((cnst_buf[i]>>16)&0xff);
+    //    *bbuf++=(unsigned char)((cnst_buf[i]>>14)&0xff);
+    //}
+    //len=bbuf-buf;
+    //printf("len: %d\n",len);
+    //if (len==fwrite(buf,sizeof(char),len,pOF))
+    if (len==fwrite(cnst_buf,sizeof(int),cnst_buf_idx,pOF))
         return OK;
     else
         return FAIL;

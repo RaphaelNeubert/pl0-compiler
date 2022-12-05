@@ -18,5 +18,5 @@ extern unsigned int cbuf_size;
 
 int generate_code(enum tCode code, ...);
 int write_code2file(int curr_var_offset);
-int write_consts2file(short *cnst_buf, short cnst_buf_idx);
+int write_consts2file(int *cnst_buf, int cnst_buf_idx);
 int write_num_proc2file(int num_proc);

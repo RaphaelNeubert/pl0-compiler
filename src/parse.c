@@ -104,6 +104,7 @@ int main(int argc, char **argv)
     else {
         printf("Fehler, pars returned %d\n",res);
         printf("Zeile: %d, Spalte %d\n",Morph.posLine, Morph.posCol);
+        printf("Zeichen: %c\n",Morph.Val.Symb);
     }
         
     fclose(pIF);

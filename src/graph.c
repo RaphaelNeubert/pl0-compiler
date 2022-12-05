@@ -10,7 +10,7 @@ enum entry_type {NProp, VConst, VVar, VProc};
 
 struct name_prop {
     enum entry_type et; 
-    short idx_proc;
+    int idx_proc;
     void *vstrct;
     int len;
     char *name;
@@ -38,9 +38,9 @@ struct vtype_proc {
 struct vtype_proc main_proc;
 struct vtype_proc *curr_proc;
 static int num_proc=1;
-static short *cnst_buf;
-static short cnst_buf_idx; //position to write to next
-static short cnst_buf_size;
+static int *cnst_buf;
+static int cnst_buf_idx; //position to write to next
+static int cnst_buf_size;
 
 static struct Edge g_expr[];
 static struct Edge g_statement[];
@@ -55,7 +55,15 @@ static int end_prog();
 static int start_proc();
 static int end_proc();
 static int fac_num();
+static int fac_ident();
 static int st_putval();
+static int expr_add();
+static int expr_sub();
+static int expr_vz();
+static int term_mult();
+static int term_div();
+static int stmnt_assign();
+static int stmnt_store();
 
 static struct Edge g_block[] = {
 /*0*/ {EtSy, {(ul)tCST},       NULL, 1,  6},
@@ -95,9 +103,9 @@ static struct Edge g_cond[] = {
 
 static struct Edge g_statement[] = {
 // a := b+c
-/*0*/ {EtMo, {(ul)mcIdent},    NULL, 1,  3},
+/*0*/ {EtMo, {(ul)mcIdent},    stmnt_assign, 1,  3},
 /*1*/ {EtSy, {(ul)tErg},       NULL, 2,  0},
-/*2*/ {EtGr, {(ul)g_expr},     NULL, 19,  0},
+/*2*/ {EtGr, {(ul)g_expr},     stmnt_store, 19,  0},
 // if
 /*3*/ {EtSy, {(ul)tIF},        NULL, 4,  7},
 /*4*/ {EtGr, {(ul)g_cond},     NULL, 5,  0},
@@ -131,7 +139,7 @@ struct Edge g_prog[] = {
 };
 
 static struct Edge g_fact[] = {
-/*0*/ {EtMo, {(ul)mcIdent}, NULL, 5, 1},
+/*0*/ {EtMo, {(ul)mcIdent}, fac_ident, 5, 1},
 /*1*/ {EtMo, {(ul)mcNum},   fac_num, 5, 2},
 /*2*/ {EtSy, {(ul)'('},     NULL, 3, 0},
 /*3*/ {EtGr, {(ul)g_expr},  NULL, 4, 0},
@@ -141,20 +149,20 @@ static struct Edge g_fact[] = {
 static struct Edge g_term[] = {
 /*0*/ {EtGr, {(ul)g_fact}, NULL, 1, 0},
 /*1*/ {EtSy, {(ul)'*'},    NULL, 2, 3},
-/*2*/ {EtGr, {(ul)g_fact}, NULL, 1, 0},
+/*2*/ {EtGr, {(ul)g_fact}, term_mult, 1, 0},
 /*3*/ {EtSy, {(ul)'/'},    NULL, 4, 5},
-/*4*/ {EtGr, {(ul)g_fact}, NULL, 1, 0},
+/*4*/ {EtGr, {(ul)g_fact}, term_div, 1, 0},
 /*5*/ {EtEn, {(ul)0},      NULL, 0, 0}
 };
 
 static struct Edge g_expr[] = {
 /*0*/ {EtSy, {(ul)'-'},    NULL, 1, 2}, 
-/*1*/ {EtGr, {(ul)g_term}, NULL, 3, 0},
+/*1*/ {EtGr, {(ul)g_term}, expr_vz, 3, 0},
 /*2*/ {EtGr, {(ul)g_term}, NULL, 3, 0},
 /*3*/ {EtSy, {(ul)'+'},    NULL, 4, 5},
-/*4*/ {EtGr, {(ul)g_term}, NULL, 3, 0},
+/*4*/ {EtGr, {(ul)g_term}, expr_add, 3, 0},
 /*5*/ {EtSy, {(ul)'-'},    NULL, 6, 7}, 
-/*6*/ {EtGr, {(ul)g_term}, NULL, 3, 0},
+/*6*/ {EtGr, {(ul)g_term}, expr_sub, 3, 0},
 /*7*/ {EtEn, {(ul)0},      NULL, 0, 0}
 };
 
@@ -167,7 +175,7 @@ void init_namelist()
         exit(-1);
     }
     curr_proc=&main_proc;
-    cnst_buf=malloc(64*sizeof(short));
+    cnst_buf=malloc(64*sizeof(int));
     if (!cnst_buf) {
         perror("malloc");
         exit(-1);
@@ -362,7 +370,7 @@ static int search_const_buf(int num)
 static void save_add_cnst(int num)
 {
     if (cnst_buf_size < (cnst_buf_idx+1)*sizeof(int)) {
-        cnst_buf=realloc(cnst_buf, cnst_buf_size+=64*sizeof(short));
+        cnst_buf=realloc(cnst_buf, cnst_buf_size+=64*sizeof(int));
         if (!cnst_buf) {
             perror("failed to realloc memory for const buffer");
             exit(-1);
@@ -473,8 +481,33 @@ static int st_putval()
 {
     return generate_code(putVal);
 }
+//ex1
+static int expr_vz()
+{
+    return generate_code(vzMinus);
+}
+//ex2
+static int expr_add()
+{
+    return generate_code(OpAdd);
+}
+//ex3
+static int expr_sub()
+{
+    return generate_code(OpSub);
+}
+// te1
+static int term_mult()
+{
+    return generate_code(OpMult);
+}
+// te2
+static int term_div()
+{
+    return generate_code(OpDiv);
+}
 
-// suchen, ggf. anlegen, puConst(ConstIndex)
+// suchen, ggf. anlegen, puConst(ConstIndex) (fa1)
 static int fac_num()
 {
     int val=Morph.Val.Num;
@@ -488,6 +521,79 @@ static int fac_num()
     }
     return 1;
 }
+// (fa2)
+static int fac_ident()
+{
+    struct name_prop *nprop=global_search_nprop(Morph.Val.pStr);
+    if (!nprop) {
+        puts("Identifier was not declared!");
+        return 0;
+    }
+    if (nprop->et == VConst) {
+        generate_code(puConst, ((struct vtype_const*)(nprop->vstrct))->idx);
+    }
+    else if (nprop->et == VVar) {
+        struct vtype_var *var=nprop->vstrct;
+        if (nprop->idx_proc == 0) {
+            // Main
+            generate_code(puValVrMain, var->displ);
+        }
+        else if (nprop->idx_proc == curr_proc->idx_proc) {
+            // Local
+            generate_code(puValVrLocl, var->displ);
+        }
+        else {
+            // Global
+            generate_code(puValVrGlob, var->displ, nprop->idx_proc);
+        }
+    }
+    else if (nprop->et == VProc) {
+        puts("can't use a procedure as a factor");
+    }
+    return 1;
+}
+//st 1
+static int stmnt_assign()
+{
+    puts("statement assign");
+    struct name_prop *nprop=global_search_nprop(Morph.Val.pStr);
+    if (!nprop) {
+        puts("Identifier was not declared!");
+        return 0;
+    }
+    if (nprop->et == VConst) {
+        puts("assignment to const not allowed!");
+        return 0;
+    }
+    else if (nprop->et == VProc) {
+        puts("assignment to procedure not allowed!");
+        return 0;
+    }
+    else if (nprop->et == VVar) {
+        struct vtype_var *var=nprop->vstrct;
+        if (nprop->idx_proc == 0) {
+            // Main
+            generate_code(puAdrVrMain, var->displ);
+        }
+        else if (nprop->idx_proc == curr_proc->idx_proc) {
+            // Local
+            generate_code(puAdrVrLocl, var->displ);
+        }
+        else {
+            // Global
+            generate_code(puAdrVrGlob, var->displ, nprop->idx_proc);
+        }
+    }
+    puts("statement assign end");
+    return 1;
+}
+
+static int stmnt_store()
+{
+    puts("statement store");
+    return generate_code(storeVal);
+}
+
 static int start_proc()
 {
     int init_size=1024;
