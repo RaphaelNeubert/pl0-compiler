@@ -64,6 +64,7 @@ static int term_mult();
 static int term_div();
 static int stmnt_assign();
 static int stmnt_store();
+static int stmnt_get();
 
 static struct Edge g_block[] = {
 /*0*/ {EtSy, {(ul)tCST},       NULL, 1,  6},
@@ -105,12 +106,12 @@ static struct Edge g_statement[] = {
 // a := b+c
 /*0*/ {EtMo, {(ul)mcIdent},    stmnt_assign, 1,  3},
 /*1*/ {EtSy, {(ul)tErg},       NULL, 2,  0},
-/*2*/ {EtGr, {(ul)g_expr},     stmnt_store, 19,  0},
+/*2*/ {EtGr, {(ul)g_expr},     stmnt_store, 20,  0},
 // if
 /*3*/ {EtSy, {(ul)tIF},        NULL, 4,  7},
 /*4*/ {EtGr, {(ul)g_cond},     NULL, 5,  0},
 /*5*/ {EtSy, {(ul)tTHN},       NULL, 6,  0},
-/*6*/ {EtGr, {(ul)g_statement},NULL, 19,  0},
+/*6*/ {EtGr, {(ul)g_statement},NULL, 20,  0},
 // while
 /*7*/ {EtSy, {(ul)tWHL},       NULL, 8,  10},
 /*8*/ {EtGr, {(ul)g_cond},     NULL, 9,  0},
@@ -119,17 +120,18 @@ static struct Edge g_statement[] = {
 /*10*/{EtSy, {(ul)tBGN},       NULL, 11, 14},
 /*11*/{EtGr, {(ul)g_statement},NULL, 12, 0},
 /*12*/{EtSy, {(ul)';'},        NULL, 11,  13},
-/*13*/{EtSy, {(ul)tEND},       NULL, 19, 0},
+/*13*/{EtSy, {(ul)tEND},       NULL, 20, 0},
 // call
 /*14*/{EtSy, {(ul)tCLL},       NULL, 15, 16},
-/*15*/{EtMo, {(ul)mcIdent},    NULL, 19,  0},
+/*15*/{EtMo, {(ul)mcIdent},    NULL, 20,  0},
 // ?
-/*16*/{EtSy, {(ul)'?'},        NULL, 15, 17},
+/*16*/{EtSy, {(ul)'?'},        NULL, 17, 18},
+/*17*/{EtMo, {(ul)mcIdent},    stmnt_get, 20,  0},
 // !
-/*17*/{EtSy, {(ul)'!'},        NULL, 18, 19},
-/*18*/{EtGr, {(ul)g_expr},     st_putval, 19,  0},
+/*18*/{EtSy, {(ul)'!'},        NULL, 19, 20},
+/*19*/{EtGr, {(ul)g_expr},     st_putval, 20,  0},
 
-/*19*/{EtEn, {(ul)0},          NULL, 0,  0} 
+/*20*/{EtEn, {(ul)0},          NULL, 0,  0} 
 };
 
 struct Edge g_prog[] = {
@@ -552,15 +554,8 @@ static int fac_ident()
     }
     return 1;
 }
-//st 1
-static int stmnt_assign()
+static int check_var(struct name_prop *nprop)
 {
-    puts("statement assign");
-    struct name_prop *nprop=global_search_nprop(Morph.Val.pStr);
-    if (!nprop) {
-        puts("Identifier was not declared!");
-        return 0;
-    }
     if (nprop->et == VConst) {
         puts("assignment to const not allowed!");
         return 0;
@@ -570,28 +565,67 @@ static int stmnt_assign()
         return 0;
     }
     else if (nprop->et == VVar) {
-        struct vtype_var *var=nprop->vstrct;
-        if (nprop->idx_proc == 0) {
-            // Main
-            generate_code(puAdrVrMain, var->displ);
-        }
-        else if (nprop->idx_proc == curr_proc->idx_proc) {
-            // Local
-            generate_code(puAdrVrLocl, var->displ);
-        }
-        else {
-            // Global
-            generate_code(puAdrVrGlob, var->displ, nprop->idx_proc);
-        }
+        return 1;
     }
-    puts("statement assign end");
-    return 1;
+    else {
+        return 0;
+    }
 }
 
+static void gen_var_adr_code(struct name_prop *nprop)
+{
+    struct vtype_var *var=nprop->vstrct;
+    if (nprop->idx_proc == 0) {
+        // Main
+        generate_code(puAdrVrMain, var->displ);
+    }
+    else if (nprop->idx_proc == curr_proc->idx_proc) {
+        // Local
+        generate_code(puAdrVrLocl, var->displ);
+    }
+    else {
+        // Global
+        generate_code(puAdrVrGlob, var->displ, nprop->idx_proc);
+    }
+}
+//st 1
+static int stmnt_assign()
+{
+    struct name_prop *nprop=global_search_nprop(Morph.Val.pStr);
+    if (!nprop) {
+        puts("Identifier was not declared!");
+        return 0;
+    }
+    if (check_var(nprop)) {
+        gen_var_adr_code(nprop);
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+// st2
 static int stmnt_store()
 {
-    puts("statement store");
     return generate_code(storeVal);
+}
+// st 9
+static int stmnt_get()
+{
+    struct name_prop *nprop=global_search_nprop(Morph.Val.pStr);
+    if (!nprop) {
+        puts("Identifier was not declared!");
+        return 0;
+    }
+    if (check_var(nprop)) {
+        gen_var_adr_code(nprop);
+        generate_code(getVal);
+
+    }
+    else {
+        return 0;
+    }
+    return 1;
 }
 
 static int start_proc()
