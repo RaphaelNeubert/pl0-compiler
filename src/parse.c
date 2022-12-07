@@ -19,8 +19,6 @@ int pars(struct Edge* p_graph)
         lex();
 
     while(1) {
-        //printf("Morph.mc %d\n",Morph.mc);
-        //printf("Morph.Val %ld\n",Morph.Val.Num);
         switch(p_edge->edge_type) {
             case EtNl:
                 succ=1;
@@ -32,9 +30,7 @@ int pars(struct Edge* p_graph)
                 succ=(Morph.mc==p_edge->edge_val.M);
                 break;
             case EtGr:
-                //puts("going in");
                 succ=pars(p_edge->edge_val.G);
-                //puts("came out");
                 break;
             case EtEn:
                 return 1;
@@ -97,6 +93,7 @@ int main(int argc, char **argv)
     fwrite(&x,sizeof(int32_t),1,pOF);
     initLex(pIF);
     init_namelist();
+    init_jump_pos_stack();
 
     int res = pars(g_prog);
     if ((res && Morph.mc == mcEmpty) || Morph.Val.Symb == -1) 

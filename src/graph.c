@@ -4,6 +4,7 @@
 #include "graph.h"
 #include "parse.h"
 #include "linkedlist.h"
+#include "stack.h"
 #include "code_gen.h"
 
 enum entry_type {NProp, VConst, VVar, VProc};
@@ -42,6 +43,10 @@ static int *cnst_buf;
 static int cnst_buf_idx; //position to write to next
 static int cnst_buf_size;
 
+static struct stack_head *jump_pos_stack;
+
+static  int condition_operator;
+
 static struct Edge g_expr[];
 static struct Edge g_statement[];
 
@@ -65,6 +70,11 @@ static int term_div();
 static int stmnt_assign();
 static int stmnt_store();
 static int stmnt_get();
+static int stmnt_if_jaddr();
+static int stmnt_if_jnot();
+static int cond_odd();
+static int set_cond_opp();
+static int cond_write();
 
 static struct Edge g_block[] = {
 /*0*/ {EtSy, {(ul)tCST},       NULL, 1,  6},
@@ -91,15 +101,16 @@ static struct Edge g_block[] = {
 };
 static struct Edge g_cond[] = {
 /*0*/ {EtSy, {(ul)tODD},    NULL, 1,  2},
-/*1*/ {EtGr, {(ul)g_expr},  NULL, 9,  0},
+/*1*/ {EtGr, {(ul)g_expr},  cond_odd, 10,  0},
 /*2*/ {EtGr, {(ul)g_expr},  NULL, 3,  0},
-/*3*/ {EtSy, {(ul)'='},     NULL, 1,  4},
-/*4*/ {EtSy, {(ul)'#'},     NULL, 1,  5},
-/*5*/ {EtSy, {(ul)'<'},     NULL, 1,  6},
-/*6*/ {EtSy, {(ul)'>'},     NULL, 1,  7},
-/*7*/ {EtSy, {(ul)tle},     NULL, 1,  8},
-/*8*/ {EtSy, {(ul)tge},     NULL, 1,  0},
-/*9*/ {EtEn, {(ul)0},       NULL, 0,  0}
+/*3*/ {EtSy, {(ul)'='},     set_cond_opp, 9,  4},
+/*4*/ {EtSy, {(ul)'#'},     set_cond_opp, 9,  5},
+/*5*/ {EtSy, {(ul)'<'},     set_cond_opp, 9,  6},
+/*6*/ {EtSy, {(ul)'>'},     set_cond_opp, 9,  7},
+/*7*/ {EtSy, {(ul)tle},     set_cond_opp, 9,  8},
+/*8*/ {EtSy, {(ul)tge},     set_cond_opp, 9,  0},
+/*9*/ {EtGr, {(ul)g_expr},  cond_write, 10,  0},
+/*10*/ {EtEn, {(ul)0},       NULL, 0,  0}
 };
 
 static struct Edge g_statement[] = {
@@ -109,9 +120,9 @@ static struct Edge g_statement[] = {
 /*2*/ {EtGr, {(ul)g_expr},     stmnt_store, 20,  0},
 // if
 /*3*/ {EtSy, {(ul)tIF},        NULL, 4,  7},
-/*4*/ {EtGr, {(ul)g_cond},     NULL, 5,  0},
+/*4*/ {EtGr, {(ul)g_cond},     stmnt_if_jnot, 5,  0},
 /*5*/ {EtSy, {(ul)tTHN},       NULL, 6,  0},
-/*6*/ {EtGr, {(ul)g_statement},NULL, 20,  0},
+/*6*/ {EtGr, {(ul)g_statement},stmnt_if_jaddr, 20,  0},
 // while
 /*7*/ {EtSy, {(ul)tWHL},       NULL, 8,  10},
 /*8*/ {EtGr, {(ul)g_cond},     NULL, 9,  0},
@@ -183,6 +194,14 @@ void init_namelist()
         exit(-1);
     }
     cnst_buf_size=64*sizeof(int);
+}
+void init_jump_pos_stack()
+{
+    jump_pos_stack=create_stack();
+    if (!jump_pos_stack) {
+        fprintf(stderr, "Failed to create jump_pos_stack stack\n");
+        exit(-1);
+    }
 }
 
 static struct name_prop* create_nprop(char *name)
@@ -437,25 +456,6 @@ static int add_proc()
     return 1;
 }
 
-static void rec_list_del(struct list_head *list)
-{
-    struct name_prop *item=list_get_first(list);
-    while (item) {
-        if (item->et == VProc) {
-            rec_list_del(((struct vtype_proc*)item->vstrct)->loc_namelist);
-            free(item->vstrct);
-        }
-        else {
-            free(item->vstrct);
-        }
-        free(item->name);
-        free(item);
-        list_remove_curr(list);
-
-        item=list_get_first(list);
-    }
-}
-
 static int delete_nlist()
 {
     puts("Displaying list:");
@@ -628,6 +628,63 @@ static int stmnt_get()
     return 1;
 }
 
+//co1
+static int cond_odd()
+{
+    return generate_code(odd);
+}
+//co2-7
+static int set_cond_opp()
+{
+    condition_operator=Morph.Val.Symb;
+    printf("set condition_operator to %c\n", condition_operator);
+    return 1;
+}
+//co8
+static int cond_write()
+{
+    switch(condition_operator) {
+        case '=':
+            generate_code(cmpEQ);
+            break;
+        case '#':
+            generate_code(cmpNE);
+            break;
+        case '<':
+            generate_code(cmpLT);
+            break;
+        case '>':
+            generate_code(cmpGT);
+            break;
+        case tle:
+            generate_code(cmpLE);
+            break;
+        case tge:
+            generate_code(cmpGE);
+            break;
+        default:
+            return 0;
+    }
+    return 1;
+}
+//st3
+static int stmnt_if_jnot()
+{
+    stack_push(jump_pos_stack, cbuf_curr+1);
+    generate_code(jnot, 0);
+    return 1;
+}
+//st4
+static int stmnt_if_jaddr()
+{
+    char *pjnot=stack_pop(jump_pos_stack);
+    //jump starts after relative addr parameter thats why -2
+    short rel_addr=cbuf_curr-pjnot-2; 
+    printf("relative addr: %d\n", rel_addr);
+    write_code_at(rel_addr, pjnot);
+    return 1;
+}
+
 static int start_proc()
 {
     int init_size=1024;
@@ -657,6 +714,8 @@ static int end_proc()
     }
     puts("\n---------done------------");
     write_code2file(curr_proc->curr_var_offset);
+    free(jump_pos_stack);
+    jump_pos_stack=NULL;
     return 1;
 }
 
@@ -666,6 +725,7 @@ static int end_prog()
     write_num_proc2file(num_proc);
 
     delete_nlist();
+    free(jump_pos_stack);
     free(cnst_buf);
     return 1;
 }

@@ -20,7 +20,7 @@ static void write_code(short x)
     *cbuf_curr++=(unsigned char)(x>>8);
 }
 // write to given position without incrementing the PC
-static void write_code_at(short x, char *cbuf_curr)
+void write_code_at(short x, char *cbuf_curr)
 {
     *cbuf_curr=(unsigned char)(x&0xff);
     *(cbuf_curr+1)=(unsigned char)(x>>8);
