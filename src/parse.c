@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "graph.h"
+#include "graph_funcs.h"
 
 typedef unsigned long ul;
 
@@ -97,10 +98,10 @@ int main(int argc, char **argv)
 
     int res = pars(g_prog);
     if ((res && Morph.mc == mcEmpty) || Morph.Val.Symb == -1) 
-        puts("Erfolg");
+        puts("Success");
     else {
-        printf("Fehler, pars returned %d\n",res);
-        printf("Zeile: %d, Spalte %d\n",Morph.posLine, Morph.posCol);
+        puts("Error");
+        printf("Row: %d, Column %d\n",Morph.posLine, Morph.posCol);
         printf("Zeichen: %c\n",Morph.Val.Symb);
     }
         

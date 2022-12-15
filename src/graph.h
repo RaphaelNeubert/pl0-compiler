@@ -28,7 +28,5 @@ struct Edge
 
 
 extern struct Edge g_prog[];
-void init_namelist();
-void init_jump_pos_stack();
 
 

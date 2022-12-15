@@ -40,7 +40,7 @@ int generate_code(enum tCode code, ...)
         }
         cbuf_curr=cbuf_start+curr_size;
     }
-    //write command
+    //write op-code
     *cbuf_curr++=code;
 
     va_start(ap,code);
@@ -84,19 +84,6 @@ int write_code2file(int curr_var_offset)
 int write_consts2file(int *cnst_buf, int cnst_buf_idx)
 {
     int len=cnst_buf_idx*sizeof(int);
-    //char buf[cnst_buf_idx*sizeof(int)];
-    //char *bbuf=buf;
-
-    //for (int i=0; i<cnst_buf_idx; i++) {
-    //    printf("idx: %d, val: %d\n", i, cnst_buf[i]);
-    //    *bbuf++=(unsigned char)(cnst_buf[i]&0xff);
-    //    *bbuf++=(unsigned char)((cnst_buf[i]>>8)&0xff);
-    //    *bbuf++=(unsigned char)((cnst_buf[i]>>16)&0xff);
-    //    *bbuf++=(unsigned char)((cnst_buf[i]>>14)&0xff);
-    //}
-    //len=bbuf-buf;
-    //printf("len: %d\n",len);
-    //if (len==fwrite(buf,sizeof(char),len,pOF))
     if (len==fwrite(cnst_buf,sizeof(int),cnst_buf_idx,pOF))
         return OK;
     else
@@ -106,7 +93,6 @@ int write_num_proc2file(int num_proc)
 {
     int len=sizeof(num_proc);
     rewind(pOF);
-    printf("num_proc: %d\n",num_proc);
     if (len==fwrite(&num_proc,len,1,pOF))
         return OK;
     else
