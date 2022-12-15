@@ -72,6 +72,10 @@ static int stmnt_store();
 static int stmnt_get();
 static int stmnt_if_jaddr();
 static int stmnt_if_jnot();
+static int stmnt_while_jaddr();
+static int stmnt_while_jnot();
+static int stmnt_while_jback();
+static int stmnt_call();
 static int cond_odd();
 static int set_cond_opp();
 static int cond_write();
@@ -117,32 +121,33 @@ static struct Edge g_statement[] = {
 // a := b+c
 /*0*/ {EtMo, {(ul)mcIdent},    stmnt_assign, 1,  3},
 /*1*/ {EtSy, {(ul)tErg},       NULL, 2,  0},
-/*2*/ {EtGr, {(ul)g_expr},     stmnt_store, 20,  0},
+/*2*/ {EtGr, {(ul)g_expr},     stmnt_store, 21,  0},
 // if
 /*3*/ {EtSy, {(ul)tIF},        NULL, 4,  7},
 /*4*/ {EtGr, {(ul)g_cond},     stmnt_if_jnot, 5,  0},
 /*5*/ {EtSy, {(ul)tTHN},       NULL, 6,  0},
-/*6*/ {EtGr, {(ul)g_statement},stmnt_if_jaddr, 20,  0},
+/*6*/ {EtGr, {(ul)g_statement},stmnt_if_jaddr, 21,  0},
 // while
-/*7*/ {EtSy, {(ul)tWHL},       NULL, 8,  10},
-/*8*/ {EtGr, {(ul)g_cond},     NULL, 9,  0},
-/*9*/ {EtSy, {(ul)tDO},        NULL, 6, 0},
+/*7*/ {EtSy, {(ul)tWHL},       stmnt_while_jback, 8,  11},
+/*8*/ {EtGr, {(ul)g_cond},     stmnt_while_jnot, 9,  0},
+/*9*/ {EtSy, {(ul)tDO},        NULL, 10, 0},
+/*10*/ {EtGr, {(ul)g_statement},stmnt_while_jaddr, 21,  0},
 // begin
-/*10*/{EtSy, {(ul)tBGN},       NULL, 11, 14},
-/*11*/{EtGr, {(ul)g_statement},NULL, 12, 0},
-/*12*/{EtSy, {(ul)';'},        NULL, 11,  13},
-/*13*/{EtSy, {(ul)tEND},       NULL, 20, 0},
+/*11*/{EtSy, {(ul)tBGN},       NULL, 12, 15},
+/*12*/{EtGr, {(ul)g_statement},NULL, 13, 0},
+/*13*/{EtSy, {(ul)';'},        NULL, 12,  14},
+/*14*/{EtSy, {(ul)tEND},       NULL, 21, 0},
 // call
-/*14*/{EtSy, {(ul)tCLL},       NULL, 15, 16},
-/*15*/{EtMo, {(ul)mcIdent},    NULL, 20,  0},
+/*15*/{EtSy, {(ul)tCLL},       NULL, 16, 17},
+/*16*/{EtMo, {(ul)mcIdent},    stmnt_call, 21,  0},
 // ?
-/*16*/{EtSy, {(ul)'?'},        NULL, 17, 18},
-/*17*/{EtMo, {(ul)mcIdent},    stmnt_get, 20,  0},
+/*17*/{EtSy, {(ul)'?'},        NULL, 18, 19},
+/*18*/{EtMo, {(ul)mcIdent},    stmnt_get, 21,  0},
 // !
-/*18*/{EtSy, {(ul)'!'},        NULL, 19, 20},
-/*19*/{EtGr, {(ul)g_expr},     st_putval, 20,  0},
+/*19*/{EtSy, {(ul)'!'},        NULL, 20, 21},
+/*20*/{EtGr, {(ul)g_expr},     st_putval, 21,  0},
 
-/*20*/{EtEn, {(ul)0},          NULL, 0,  0} 
+/*21*/{EtEn, {(ul)0},          NULL, 0,  0} 
 };
 
 struct Edge g_prog[] = {
@@ -637,7 +642,6 @@ static int cond_odd()
 static int set_cond_opp()
 {
     condition_operator=Morph.Val.Symb;
-    printf("set condition_operator to %c\n", condition_operator);
     return 1;
 }
 //co8
@@ -670,7 +674,7 @@ static int cond_write()
 //st3
 static int stmnt_if_jnot()
 {
-    stack_push(jump_pos_stack, cbuf_curr+1);
+    stack_push(jump_pos_stack, cbuf_curr);
     generate_code(jnot, 0);
     return 1;
 }
@@ -679,9 +683,49 @@ static int stmnt_if_jaddr()
 {
     char *pjnot=stack_pop(jump_pos_stack);
     //jump starts after relative addr parameter thats why -2
-    short rel_addr=cbuf_curr-pjnot-2; 
-    printf("relative addr: %d\n", rel_addr);
-    write_code_at(rel_addr, pjnot);
+    short rel_addr=cbuf_curr-pjnot-3; 
+    write_code_at(rel_addr, pjnot+1);
+    return 1;
+}
+//st5
+static int stmnt_while_jback()
+{
+    stack_push(jump_pos_stack, cbuf_curr);
+    return 1;
+
+}
+//st6
+static int stmnt_while_jnot()
+{
+    stack_push(jump_pos_stack, cbuf_curr);
+    generate_code(jnot, 0);
+    return 1;
+}
+//st7
+static int stmnt_while_jaddr()
+{
+    char *pjnot=stack_pop(jump_pos_stack);
+    char *pjback=stack_pop(jump_pos_stack);
+    short rel_addr=cbuf_curr-pjnot;  //jnot
+    write_code_at(rel_addr, pjnot+1);
+    rel_addr=-1*(cbuf_curr-pjback+3);         //jback
+    generate_code(jmp, rel_addr);
+    return 1;
+}
+static int stmnt_call()
+{
+    struct name_prop *nprop=global_search_nprop(Morph.Val.pStr);
+    short pnum;
+    if (!nprop) {
+        printf("procedure: %s undeclared\n", Morph.Val.pStr);
+        return 0;
+    }
+    if(nprop->et != VProc) {
+        printf("Variable: %s is not a procedure but expected to be one\n", Morph.Val.pStr);
+        return 0;
+    }
+    pnum=((struct vtype_proc*)nprop->vstrct)->idx_proc;
+    generate_code(call,pnum);
     return 1;
 }
 
