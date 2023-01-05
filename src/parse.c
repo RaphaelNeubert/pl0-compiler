@@ -102,7 +102,7 @@ int main(int argc, char **argv)
     else {
         puts("Error");
         printf("Row: %d, Column %d\n",Morph.posLine, Morph.posCol);
-        printf("Zeichen: %c\n",Morph.Val.Symb);
+        print_err_line();
     }
         
     fclose(pIF);

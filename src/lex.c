@@ -13,6 +13,10 @@ static char vBuf[1024+1]; // Buffer zum Sammeln
 static char* pBuf; // Pointer in den Buffer
 static int line,col; // Zeile und Spalte
 
+static char currLine[1024];
+static int currLinePos;
+
+
 
 typedef struct stateFunc
 {
@@ -136,10 +140,20 @@ static void fb(void)
             break;
     }
 }
+static int myfgetc(FILE *f)
+{
+    if (currLine[currLinePos] == '\0') {
+        if (!fgets(currLine,sizeof(currLine),pIF)) {
+            return EOF;
+        }
+        currLinePos=0;
+    }
+    return currLine[currLinePos++];
+}
 // lesen
 static void fl(void)
 {
-    X = fgetc(pIF);
+    X = myfgetc(pIF);
     if (X == '\n') line++, col=0;
     else col++;
 }
@@ -164,10 +178,16 @@ static void fslb(void)
     fb();
 }
 
+void print_err_line()
+{
+    printf("%s", currLine);
+    printf("%*c^\n",Morph.posCol-1, ' ');
+}
 int initLex(FILE *f)
 {
     pIF=f;
-    X=fgetc(pIF); 
+    X=myfgetc(pIF); 
+
     return OK;
 }
 

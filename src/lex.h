@@ -25,5 +25,6 @@ typedef struct morph
 
 extern tMorph Morph; // globale Variable f. Akt. Token
 
+void print_err_line();
 int initLex(FILE *f);
 tMorph* lex(void);
