@@ -54,6 +54,8 @@ int stmnt_store();
 int stmnt_get();
 int stmnt_if_jaddr();
 int stmnt_if_jnot();
+int stmnt_else_jaddr();
+int stmnt_else_jmp();
 int stmnt_while_jaddr();
 int stmnt_while_jnot();
 int stmnt_while_jback();

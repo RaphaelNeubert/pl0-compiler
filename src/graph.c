@@ -50,37 +50,39 @@ static struct Edge g_statement[] = {
 // a := b+c
 /*0*/ {EtMo, {(ul)mcIdent},    stmnt_assign, 1,  3},
 /*1*/ {EtSy, {(ul)tErg},       NULL, 2,  0},
-/*2*/ {EtGr, {(ul)g_expr},     stmnt_store, 25,  0},
+/*2*/ {EtGr, {(ul)g_expr},     stmnt_store, 27,  0},
 // if
-/*3*/ {EtSy, {(ul)tIF},        NULL, 4,  7},
+/*3*/ {EtSy, {(ul)tIF},        NULL, 4,  9},
 /*4*/ {EtGr, {(ul)g_cond},     stmnt_if_jnot, 5,  0},
 /*5*/ {EtSy, {(ul)tTHN},       NULL, 6,  0},
-/*6*/ {EtGr, {(ul)g_statement},stmnt_if_jaddr, 25,  0},
+/*6*/ {EtGr, {(ul)g_statement},stmnt_if_jaddr, 7,  0},
+/*7*/ {EtSy, {(ul)tELS},       stmnt_else_jmp, 8,  27},
+/*8*/ {EtGr, {(ul)g_statement},stmnt_else_jaddr, 27,  0},
 // while
-/*7*/ {EtSy, {(ul)tWHL},       stmnt_while_jback, 8,  11},
-/*8*/ {EtGr, {(ul)g_cond},     stmnt_while_jnot, 9,  0},
-/*9*/ {EtSy, {(ul)tDO},        NULL, 10, 0},
-/*10*/ {EtGr, {(ul)g_statement},stmnt_while_jaddr, 25,  0},
+/*9*/  {EtSy, {(ul)tWHL},       stmnt_while_jback, 10,  13},
+/*10*/ {EtGr, {(ul)g_cond},     stmnt_while_jnot, 11,  0},
+/*11*/ {EtSy, {(ul)tDO},        NULL, 12, 0},
+/*12*/ {EtGr, {(ul)g_statement},stmnt_while_jaddr, 27,  0},
 // begin
-/*11*/{EtSy, {(ul)tBGN},       NULL, 12, 15},
-/*12*/{EtGr, {(ul)g_statement},NULL, 13, 0},
-/*13*/{EtSy, {(ul)';'},        NULL, 12,  14},
-/*14*/{EtSy, {(ul)tEND},       NULL, 25, 0},
+/*13*/{EtSy, {(ul)tBGN},       NULL, 14, 17},
+/*14*/{EtGr, {(ul)g_statement},NULL, 15, 0},
+/*15*/{EtSy, {(ul)';'},        NULL, 14,  16},
+/*16*/{EtSy, {(ul)tEND},       NULL, 27, 0},
 // call
-/*15*/{EtSy, {(ul)tCLL},       NULL, 16, 21},
-/*16*/{EtMo, {(ul)mcIdent},    stmnt_call, 17,  0},
-/*17*/{EtSy, {(ul)'('},        NULL, 18, 0},
-/*18*/{EtGr, {(ul)g_expr},     stmnt_call_param, 19, 20},
-/*19*/{EtSy, {(ul)','},        NULL, 18, 20},
-/*20*/{EtSy, {(ul)')'},        stmnt_call_end, 25, 0},
+/*17*/{EtSy, {(ul)tCLL},       NULL, 18, 23},
+/*18*/{EtMo, {(ul)mcIdent},    stmnt_call, 19,  0},
+/*19*/{EtSy, {(ul)'('},        NULL, 20, 0},
+/*20*/{EtGr, {(ul)g_expr},     stmnt_call_param, 21, 22},
+/*21*/{EtSy, {(ul)','},        NULL, 20, 22},
+/*22*/{EtSy, {(ul)')'},        stmnt_call_end, 27, 0},
 // ?
-/*21*/{EtSy, {(ul)'?'},        NULL, 22, 23},
-/*22*/{EtMo, {(ul)mcIdent},    stmnt_get, 25,  0},
+/*23*/{EtSy, {(ul)'?'},        NULL, 24, 25},
+/*24*/{EtMo, {(ul)mcIdent},    stmnt_get, 27,  0},
 // !
-/*23*/{EtSy, {(ul)'!'},        NULL, 24, 25},
-/*24*/{EtGr, {(ul)g_expr},     st_putval, 25,  0},
+/*25*/{EtSy, {(ul)'!'},        NULL, 26, 27},
+/*26*/{EtGr, {(ul)g_expr},     st_putval, 27,  0},
 
-/*25*/{EtEn, {(ul)0},          NULL, 0,  0} 
+/*27*/{EtEn, {(ul)0},          NULL, 0,  0} 
 };
 
 struct Edge g_prog[] = {
