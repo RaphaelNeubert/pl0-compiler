@@ -15,9 +15,12 @@ static int *cnst_buf;
 static int cnst_buf_idx; //position to write to next
 static int cnst_buf_size;
 
-static struct stack_head *jump_pos_stack;
+static struct stack_head *jump_pos_stack; //used for jpos and proc calls
 
-static  int condition_operator;
+static int condition_operator;
+
+// required because call needs to be generated after parameter
+static int call_proc_num;
 
 
 void init_namelist()
@@ -81,9 +84,23 @@ static struct vtype_proc* create_proc(struct vtype_proc* parent)
         exit(-1);
     }
     proc->curr_var_offset=0;
+    proc->param_counter=0;
     num_proc++;
 
     return proc;
+}
+static struct vtype_var* create_param()
+{
+    struct vtype_var *var=malloc(sizeof(struct vtype_var));
+    if (!var) {
+        perror("malloc");
+        exit(-1);
+    }
+    var->et=VParam;
+    //var->displ=curr_proc->curr_var_offset;
+    //curr_proc->curr_var_offset+=4;
+
+    return var;
 }
 static struct vtype_var* create_var()
 {
@@ -182,6 +199,10 @@ static void display_list(struct vtype_proc *proc)
                 struct vtype_var *var=nprop->vstrct;
                 printf("%04d: Var name: %s, disp: %d\n", proc->idx_proc,nprop->name, var->displ);
                 break;
+            case VParam:
+                struct vtype_var *param=nprop->vstrct;
+                printf("%04d: Param name: %s, disp: %d\n", proc->idx_proc,nprop->name, param->displ);
+                break;
             default:
                 puts("type unknown");
                 break;
@@ -201,9 +222,7 @@ static struct name_prop* create_insert_nprop(enum entry_type et)
     //dcnstisplay_list(curr_proc);
 
     if (search_nprop(curr_proc, Morph.Val.pStr)) {
-        //printf("error Line %d, Column %d: redefinition of %s\n",
-        //       Morph.posLine, Morph.posCol, Morph.Val.pStr);
-        printf("error: redefinition of %s\n", Morph.Val.pStr);
+        printf("Error: redefinition of %s\n", Morph.Val.pStr);
         return NULL;
     }
     nprop=create_nprop(Morph.Val.pStr);
@@ -275,6 +294,17 @@ int add_cnst()
     return add_cnst_buf();
 }
 
+int add_param()
+{
+    struct vtype_var *var;
+    struct name_prop *nprop=create_insert_nprop(VParam);
+    if (!nprop)
+        return 0;
+    var=create_param();
+    nprop->vstrct=var;
+    curr_proc->param_counter++;
+    return 1;
+}
 int add_var()
 {
     struct vtype_var *var;
@@ -369,13 +399,13 @@ int fac_ident()
 {
     struct name_prop *nprop=global_search_nprop(Morph.Val.pStr);
     if (!nprop) {
-        puts("Identifier was not declared!");
+        printf("Error: Identifier: %s was not declared!\n", Morph.Val.pStr);
         return 0;
     }
     if (nprop->et == VConst) {
         generate_code(puConst, ((struct vtype_const*)(nprop->vstrct))->idx);
     }
-    else if (nprop->et == VVar) {
+    else if (nprop->et == VVar || nprop->et == VParam) {
         struct vtype_var *var=nprop->vstrct;
         if (nprop->idx_proc == 0) {
             // Main
@@ -455,7 +485,7 @@ int stmnt_get()
 {
     struct name_prop *nprop=global_search_nprop(Morph.Val.pStr);
     if (!nprop) {
-        puts("Identifier was not declared!");
+        printf("Error: Identifier: %s was not declared!\n",Morph.Val.pStr);
         return 0;
     }
     if (check_var(nprop)) {
@@ -552,18 +582,38 @@ int stmnt_while_jaddr()
 int stmnt_call()
 {
     struct name_prop *nprop=global_search_nprop(Morph.Val.pStr);
-    short pnum;
     if (!nprop) {
-        printf("procedure: %s undeclared\n", Morph.Val.pStr);
+        printf("Error: Procedure: %s undeclared\n", Morph.Val.pStr);
         return 0;
     }
-    if(nprop->et != VProc) {
-        printf("Variable: %s is not a procedure but expected to be one\n", Morph.Val.pStr);
+    else if(nprop->et != VProc) {
+        printf("Error: Variable: %s is not a procedure but expected to be one\n", Morph.Val.pStr);
         return 0;
     }
-    pnum=((struct vtype_proc*)nprop->vstrct)->idx_proc;
-    generate_code(call,pnum);
+    stack_push(jump_pos_stack, nprop); 
+    //call_proc_num=((struct vtype_proc*)nprop->vstrct)->idx_proc;
     return 1;
+}
+int stmnt_call_param()
+{
+    struct name_prop *nprop=stack_top(jump_pos_stack);
+    struct vtype_proc *proc=(struct vtype_proc*)nprop->vstrct;
+    proc->param_counter--;
+    return 1;
+}
+int stmnt_call_end()
+{
+    struct name_prop *nprop=stack_pop(jump_pos_stack); 
+    struct vtype_proc *proc=(struct vtype_proc*)nprop->vstrct;
+    if (proc->param_counter > 0) {
+        printf("Error: Not enough parameters in call of function: %s\n",nprop->name);
+        return 0;
+    }
+    else if (proc->param_counter < 0) {
+        printf("Error: Too many parameters in call of function: %s\n",nprop->name);
+        return 0;
+    }
+    return generate_code(call, proc->idx_proc);
 }
 
 int start_proc()
@@ -590,8 +640,8 @@ int end_proc()
     generate_code(retProc);
 
     write_code2file(curr_proc->curr_var_offset);
-    free(jump_pos_stack);
-    jump_pos_stack=NULL;
+    //free(jump_pos_stack);
+    //jump_pos_stack=NULL;
     return 1;
 }
 
@@ -603,5 +653,24 @@ int end_prog()
     delete_nlist();
     free(jump_pos_stack);
     free(cnst_buf);
+    free(cbuf_start);
+    return 1;
+}
+
+int enter_param_displ()
+{
+    struct list_head *list=curr_proc->loc_namelist;
+    struct vtype_var *param;
+    int offset=-24;
+
+    struct name_prop *nprop=list_get_last(list);
+    while(nprop) {
+        if (nprop->et == VParam) {
+            param=nprop->vstrct;
+            param->displ=offset;
+            offset-=4;
+        }
+        nprop=list_get_prev(list);
+    }
     return 1;
 }

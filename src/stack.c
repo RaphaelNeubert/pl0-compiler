@@ -43,3 +43,7 @@ void* stack_pop(struct stack_head *stack)
     return NULL;
 }
 
+void* stack_top(struct stack_head *stack)
+{
+    return stack->top->item;
+}

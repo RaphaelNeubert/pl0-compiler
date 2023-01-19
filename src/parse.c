@@ -84,7 +84,6 @@ int main(int argc, char **argv)
         oName=vName;
     oName++;
     strcat(oName,".cl0");
-    puts(oName);
     pOF=fopen(oName, "w");
     if (pOF == NULL) {
         perror("fopen");
@@ -100,7 +99,6 @@ int main(int argc, char **argv)
     if ((res && Morph.mc == mcEmpty) || Morph.Val.Symb == -1) 
         puts("Success");
     else {
-        puts("Error");
         printf("Row: %d, Column %d\n",Morph.posLine, Morph.posCol);
         print_err_line();
     }
