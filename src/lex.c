@@ -38,12 +38,35 @@ static char vZKL[128] = {
 /*---------------------------------------------------------*/
 /* 0*/ 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,/* 0*/
 /*10*/ 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,/*10*/
-/*20*/ 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,/*20*/
+/*20*/ 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 8,/*20*/
 /*30*/ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 5, 4, 6, 0,/*30*/
 /*40*/ 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,/*40*/
 /*50*/ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0,/*50*/
 /*60*/ 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,/*60*/
 /*70*/ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 7/*70*/
+};
+
+static void fb(void);   // beenden
+static void fl(void);   // lesen
+static void fsl(void);  // schreiben, lesen
+static void fgl(void);  // schreiben als Grossbuchstabe, lesen
+static void fslb(void); // schreiben, lesen, beenden
+static void frl(void);  // puffer-reset, lesen
+                        //
+stateFunc vSMatrix[][10] = {
+/*          SoZei    Ziffer  Buchstabe     :          =           <           >         sonst      /        *   */
+/* Z0 */ {{12,fslb},{1,fsl},  {2,fgl},  {3,fsl},   {12,fslb},  {4,fsl},    {5,fsl},    {0,fl},   {9,fsl},  {12,fslb}},
+/* Z1 */ {{12,fb},  {1,fsl},  {12,fb},  {12,fb},   {12,fb},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
+/* Z2 */ {{12,fb},  {2,fsl},  {2,fgl},  {12,fb},   {12,fb},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
+/* Z3 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {6,fsl},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
+/* Z4 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {7,fsl},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
+/* Z5 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {8,fsl},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
+/* Z6 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {12,fb},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
+/* Z7 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {12,fb},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
+/* Z8 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {12,fb},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
+/* Z9 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {12,fb},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {10,fl}},
+/* Z10 */{{10,fl},  {10,fl},  {10,fl},  {10,fl},   {10,fl},    {10,fl},    {10,fl},    {10,fl},  {10,fl}, {11,fl}},
+/* Z11 */{{10,fl},  {10,fl},  {10,fl},  {10,fl},   {10,fl},    {10,fl},    {10,fl},    {10,fl},  {0,frl},  {11,fl}}
 };
 
 // Hastable zur Schluesselworterkennung
@@ -77,24 +100,6 @@ static struct keywrd ktable['Z'-'A'+1][8] = {
 /* Z */ {{0L,tNIL},{0L,  tNIL},{0L,   tNIL},{0L,       tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}}
 };
 
-static void fb(void);   // beenden
-static void fl(void);   // lesen
-static void fsl(void);  // schreiben, lesen
-static void fgl(void);  // schreiben als Grossbuchstabe, lesen
-static void fslb(void); // schreiben, lesen, beenden
-                        //
-stateFunc vSMatrix[][8] = {
-/*          SoZei    Ziffer  Buchstabe     :            =           <           >         sonst */
-/* Z0 */ {{9,fslb},{1,fsl},  {2,fgl},    {3,fsl},    {9,fslb},    {4,fsl},    {5,fsl},    {0,fl}},
-/* Z1 */ {{9,fb},  {1,fsl},  {9,fb},     {9,fb},     {9,fb},     {9,fb},     {9,fb},     {9,fb}},
-/* Z2 */ {{9,fb},  {2,fsl},  {2,fgl},    {9,fb},     {9,fb},     {9,fb},     {9,fb},     {9,fb}},
-/* Z3 */ {{9,fb},  {9,fb},   {9,fb},     {9,fb},     {6,fsl},    {9,fb},     {9,fb},     {9,fb}},
-/* Z4 */ {{9,fb},  {9,fb},   {9,fb},     {9,fb},     {7,fsl},    {9,fb},     {9,fb},     {9,fb}},
-/* Z5 */ {{9,fb},  {9,fb},   {9,fb},     {9,fb},     {8,fsl},    {9,fb},     {9,fb},     {9,fb}},
-/* Z6 */ {{9,fb},  {9,fb},   {9,fb},     {9,fb},     {9,fb},     {9,fb},     {9,fb},     {9,fb}},
-/* Z7 */ {{9,fb},  {9,fb},   {9,fb},     {9,fb},     {9,fb},     {9,fb},     {9,fb},     {9,fb}},
-/* Z8 */ {{9,fb},  {9,fb},   {9,fb},     {9,fb},     {9,fb},     {9,fb},     {9,fb},     {9,fb}}
-};
 
 static void fb(void)
 {
@@ -103,6 +108,7 @@ static void fb(void)
         case 3: // :
         case 4: // <
         case 5: // >
+        case 9: // /
         case 0: // special chars
             Morph.Val.Symb=vBuf[0];
             Morph.mc=mcSymb;
@@ -177,6 +183,12 @@ static void fslb(void)
     fsl();
     fb();
 }
+static void frl(void)
+{
+    pBuf=vBuf;
+    pBuf[0]='\0';
+    fl();
+}
 
 void print_err_line()
 {
@@ -204,7 +216,7 @@ tMorph* lex()
         zx=vSMatrix[Z][(int)vZKL[(int)X]].state;
         vSMatrix[Z][(int)vZKL[(int)X]].func();
         Z=zx;
-    } while(Z != 9);
+    } while(Z != 12);
     
     return &Morph;
 }
