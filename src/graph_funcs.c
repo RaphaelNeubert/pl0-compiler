@@ -549,20 +549,20 @@ int stmnt_if_jaddr()
     //also note that we need to jump behind the jmp of the else
     short rel_addr=cbuf_curr-pjnot; 
     write_code_at(rel_addr, pjnot+1);
+    generate_code(jmp, 0); // jump for else
     return 1;
 }
 int stmnt_else_jmp()
 {
     stack_push(jump_pos_stack, cbuf_curr);
-    generate_code(jmp, 0);
     return 1;
 }
 int stmnt_else_jaddr()
 {
     char *pjnot=stack_pop(jump_pos_stack);
     //jump starts after relative addr parameter 
-    short rel_addr=cbuf_curr-pjnot-3; 
-    write_code_at(rel_addr, pjnot+1);
+    short rel_addr=cbuf_curr-pjnot; 
+    write_code_at(rel_addr, pjnot-2);
     return 1;
 }
 //st5
