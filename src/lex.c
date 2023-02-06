@@ -39,11 +39,11 @@ static char vZKL[128] = {
 /* 0*/ 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,/* 0*/
 /*10*/ 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,/*10*/
 /*20*/ 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 8,/*20*/
-/*30*/ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 5, 4, 6, 0,/*30*/
-/*40*/ 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,/*40*/
+/*30*/10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, 5, 4, 6, 0,/*30*/
+/*40*/ 0,12,12,12,12,12,12, 2, 2, 2, 2, 2, 2, 2, 2, 2,/*40*/
 /*50*/ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0,/*50*/
-/*60*/ 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,/*60*/
-/*70*/ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 7/*70*/
+/*60*/ 0,12,12,12,12,12,12, 2, 2, 2, 2, 2, 2, 2, 2, 2,/*60*/
+/*70*/ 2, 2, 2, 2, 2, 2, 2, 2,11, 2, 2, 0, 0, 0, 0, 7 /*70*/
 };
 
 static void fb(void);   // beenden
@@ -53,26 +53,28 @@ static void fgl(void);  // schreiben als Grossbuchstabe, lesen
 static void fslb(void); // schreiben, lesen, beenden
 static void frl(void);  // puffer-reset, lesen
                         //
-stateFunc vSMatrix[][10] = {
-/*          SoZei    Ziffer  Buchstabe     :          =           <           >         sonst      /        *   */
-/* Z0 */ {{12,fslb},{1,fsl},  {2,fgl},  {3,fsl},   {12,fslb},  {4,fsl},    {5,fsl},    {0,fl},   {9,fsl},  {12,fslb}},
-/* Z1 */ {{12,fb},  {1,fsl},  {12,fb},  {12,fb},   {12,fb},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
-/* Z2 */ {{12,fb},  {2,fsl},  {2,fgl},  {12,fb},   {12,fb},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
-/* Z3 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {6,fsl},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
-/* Z4 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {7,fsl},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
-/* Z5 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {8,fsl},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
-/* Z6 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {12,fb},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
-/* Z7 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {12,fb},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
-/* Z8 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {12,fb},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {12,fb}},
-/* Z9 */ {{12,fb},  {12,fb},  {12,fb},  {12,fb},   {12,fb},    {12,fb},    {12,fb},    {12,fb},  {12,fb}, {10,fl}},
-/* Z10 */{{10,fl},  {10,fl},  {10,fl},  {10,fl},   {10,fl},    {10,fl},    {10,fl},    {10,fl},  {10,fl}, {11,fl}},
-/* Z11 */{{10,fl},  {10,fl},  {10,fl},  {10,fl},   {10,fl},    {10,fl},    {10,fl},    {10,fl},  {0,frl},  {11,fl}}
+stateFunc vSMatrix[][13] = {
+/*          SoZei    Ziffer  Buchstabe     :          =           <           >         sonst      /        *           0         x      a-f, A-F  */
+/* Z0 */ {{14,fslb},{1,fsl},  {2,fgl},  {3,fsl},   {14,fslb},  {4,fsl},    {5,fsl},    {0,fl},   {9,fsl}, {14,fslb},{12,fsl}, {2,fgl},  {2,fgl}},
+/* Z1 */ {{14,fb},  {1,fsl},  {14,fb},  {14,fb},   {14,fb},    {14,fb},    {14,fb},    {14,fb},  {14,fb}, {14,fb},  {1,fsl},  {14,fb},  {14,fb}},
+/* Z2 */ {{14,fb},  {2,fsl},  {2,fgl},  {14,fb},   {14,fb},    {14,fb},    {14,fb},    {14,fb},  {14,fb}, {14,fb},  {2,fsl},  {2,fgl},  {2,fgl}},
+/* Z3 */ {{14,fb},  {14,fb},  {14,fb},  {14,fb},   {6,fsl},    {14,fb},    {14,fb},    {14,fb},  {14,fb}, {14,fb},  {14,fb},  {14,fb},  {14,fb}},
+/* Z4 */ {{14,fb},  {14,fb},  {14,fb},  {14,fb},   {7,fsl},    {14,fb},    {14,fb},    {14,fb},  {14,fb}, {14,fb},  {14,fb},  {14,fb},  {14,fb}},
+/* Z5 */ {{14,fb},  {14,fb},  {14,fb},  {14,fb},   {8,fsl},    {14,fb},    {14,fb},    {14,fb},  {14,fb}, {14,fb},  {14,fb},  {14,fb},  {14,fb}},
+/* Z6 */ {{14,fb},  {14,fb},  {14,fb},  {14,fb},   {14,fb},    {14,fb},    {14,fb},    {14,fb},  {14,fb}, {14,fb},  {14,fb},  {14,fb},  {14,fb}},
+/* Z7 */ {{14,fb},  {14,fb},  {14,fb},  {14,fb},   {14,fb},    {14,fb},    {14,fb},    {14,fb},  {14,fb}, {14,fb},  {14,fb},  {14,fb},  {14,fb}},
+/* Z8 */ {{14,fb},  {14,fb},  {14,fb},  {14,fb},   {14,fb},    {14,fb},    {14,fb},    {14,fb},  {14,fb}, {14,fb},  {14,fb},  {14,fb},  {14,fb}},
+/* Z9 */ {{14,fb},  {14,fb},  {14,fb},  {14,fb},   {14,fb},    {14,fb},    {14,fb},    {14,fb},  {14,fb}, {10,fl},  {14,fb},  {14,fb},  {14,fb}},
+/* Z10 */{{10,fl},  {10,fl},  {10,fl},  {10,fl},   {10,fl},    {10,fl},    {10,fl},    {10,fl},  {10,fl}, {11,fl},  {10,fl},  {10,fl},  {10,fl}},
+/* Z11 */{{10,fl},  {10,fl},  {10,fl},  {10,fl},   {10,fl},    {10,fl},    {10,fl},    {10,fl},  {0,frl}, {11,fl},  {10,fl},  {10,fl},  {10,fl}},
+/* Z12 */{{14,fb},  {1,fsl},  {14,fb},  {14,fb},   {14,fb},    {14,fb},    {14,fb},    {14,fb},  {14,fb}, {14,fb},  {1,fsl},  {13,fsl}, {14,fb}},
+/* Z13 */{{14,fb},  {13,fsl}, {14,fb},  {14,fb},   {14,fb},    {14,fb},    {14,fb},    {14,fb},  {14,fb}, {14,fb},  {13,fsl}, {14,fb}, {13,fsl}}
 };
 
 // Hastable zur Schluesselworterkennung
 static struct keywrd ktable['Z'-'A'+1][8] = {
 /*Len:      2          3          4               5             6         7         8         9*/
-/* A */ {{0L,tNIL},{0L,  tNIL},{0L,   tNIL},{0L,       tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}},
+/* A */ {{0L,tNIL},{"ND",tAND},{0L,   tNIL},{0L,       tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}},
 /* B */ {{0L,tNIL},{0L,  tNIL},{0L,   tNIL},{"EGIN",   tBGN},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}},
 /* C */ {{0L,tNIL},{0L,  tNIL},{"ALL",tCLL},{"ONST",   tCST},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}},
 /* D */ {{"O",tDO},{0L,  tNIL},{0L,   tNIL},{0L,       tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}},
@@ -86,7 +88,7 @@ static struct keywrd ktable['Z'-'A'+1][8] = {
 /* L */ {{0L,tNIL},{0L,  tNIL},{0L,   tNIL},{0L,       tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}},
 /* M */ {{0L,tNIL},{0L,  tNIL},{0L,   tNIL},{0L,       tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}},
 /* N */ {{0L,tNIL},{0L,  tNIL},{0L,   tNIL},{0L,       tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}},
-/* O */ {{0L,tNIL},{"DD",tODD},{0L,   tNIL},{0L,       tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}},
+/* O */ {{"R",tOR},{"DD",tODD},{0L,   tNIL},{0L,       tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}},
 /* P */ {{0L,tNIL},{"UT",tPUT},{0L,   tNIL},{0L,       tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL},{"ROCEDURE",tPRC}},
 /* Q */ {{0L,tNIL},{0L,  tNIL},{0L,   tNIL},{0L,       tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}},
 /* R */ {{0L,tNIL},{0L,  tNIL},{0L,   tNIL},{0L,       tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL},{0L,tNIL}},
@@ -114,7 +116,12 @@ static void fb(void)
             Morph.mc=mcSymb;
             break;
         case 1: // Number
+        case 12:// 0
             Morph.Val.Num=atol(vBuf);
+            Morph.mc=mcNum;
+            break;
+        case 13: // Hex-Number
+            Morph.Val.Num=strtol(vBuf,NULL,16);
             Morph.mc=mcNum;
             break;
         case 2:
@@ -216,7 +223,7 @@ tMorph* lex()
         zx=vSMatrix[Z][(int)vZKL[(int)X]].state;
         vSMatrix[Z][(int)vZKL[(int)X]].func();
         Z=zx;
-    } while(Z != 12);
+    } while(Z != 14);
     
     return &Morph;
 }
