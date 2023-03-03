@@ -18,6 +18,7 @@ static int cnst_buf_size;
 static struct stack_head *jump_pos_stack; //used for jpos and proc calls
 
 static int condition_operator;
+static char condition_connector;
 
 
 void init_namelist()
@@ -532,6 +533,28 @@ int cond_write()
         default:
             return 0;
     }
+    switch (condition_connector) {
+        case 'a': // and
+            generate_code(OpMult);
+            condition_operator=0;
+            break;
+        case 'o': // or
+            generate_code(OpAdd);
+            condition_operator=0;
+            break;
+        default:
+            break;
+    }
+    return 1;
+}
+int cond_and()
+{
+    condition_connector='a';
+    return 1;
+}
+int cond_or()
+{
+    condition_connector='o';
     return 1;
 }
 //st3

@@ -65,4 +65,6 @@ int stmnt_call_end();
 int cond_odd();
 int set_cond_opp();
 int cond_write();
+int cond_and();
+int cond_or();
 int enter_param_displ();

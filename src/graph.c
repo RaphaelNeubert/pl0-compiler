@@ -34,7 +34,7 @@ static struct Edge g_block[] = {
 };
 static struct Edge g_cond[] = {
 /*0*/ {EtSy, {(ul)tODD},    NULL, 1,  2},
-/*1*/ {EtGr, {(ul)g_expr},  cond_odd, 10,  0},
+/*1*/ {EtGr, {(ul)g_expr},  cond_odd, 12,  0},
 /*2*/ {EtGr, {(ul)g_expr},  NULL, 3,  0},
 /*3*/ {EtSy, {(ul)'='},     set_cond_opp, 9,  4},
 /*4*/ {EtSy, {(ul)'#'},     set_cond_opp, 9,  5},
@@ -43,7 +43,9 @@ static struct Edge g_cond[] = {
 /*7*/ {EtSy, {(ul)tle},     set_cond_opp, 9,  8},
 /*8*/ {EtSy, {(ul)tge},     set_cond_opp, 9,  0},
 /*9*/ {EtGr, {(ul)g_expr},  cond_write, 10,  0},
-/*10*/ {EtEn, {(ul)0},       NULL, 0,  0}
+/*10*/ {EtSy,{(ul)tAND},    cond_and, 0,  11},
+/*11*/ {EtSy,{(ul)tOR},     cond_or, 0,  12},
+/*12*/ {EtEn,{(ul)0},       NULL, 0,  0}
 };
 
 static struct Edge g_statement[] = {
